@@ -178,7 +178,7 @@ export default function Home() {
   const [lastQuery, setLastQuery] = useState<{ type: 'text' | 'image', value: string }>({ type: 'text', value: '' });
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [animationKey, setAnimationKey] = useState(0);
-  const [displayType, setDisplayType] = useState<'text' | 'image'>('text');
+  // const [displayType, setDisplayType] = useState<'text' | 'image'>('text');
   const [animationState, setAnimationState] = useState<'enter' | 'exit' | 'hidden'>('enter');
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -206,11 +206,13 @@ export default function Home() {
     setImageErrors(new Set()); // Reset image errors on new search
 
     try {
-      const apiUrl = 'http://localhost:5000';
+      // const apiUrl = 'http://localhost:5000';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
       const response = await fetch(`${apiUrl}/search`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true', // Skip Ngrok warning page
         },
         body: JSON.stringify({ query, k }),
       });
@@ -239,13 +241,17 @@ export default function Home() {
     setImageErrors(new Set()); // Reset image errors on new search
 
     try {
-      const apiUrl = 'http://localhost:5000';
+      // const apiUrl = 'http://localhost:5000';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
       const formData = new FormData();
       formData.append('image', uploadedImage);
       formData.append('k', k.toString());
 
       const response = await fetch(`${apiUrl}/search/image`, {
         method: 'POST',
+        headers: {
+          'ngrok-skip-browser-warning': 'true', // Skip Ngrok warning page
+        },
         body: formData,
       });
 
@@ -311,7 +317,7 @@ export default function Home() {
     // Wait for exit animation to complete
     setTimeout(() => {
       setSearchType(newType);
-      setDisplayType(newType);
+      // setDisplayType(newType);
       setAnimationKey(prev => prev + 1);
       
       // Clear any previous errors when switching
@@ -342,9 +348,13 @@ export default function Home() {
     }
 
     try {
-      // const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const apiUrl = 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/image/${path}`);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      // const apiUrl = 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/image/${path}`, {
+        headers: {
+          'ngrok-skip-browser-warning': 'true', // Skip Ngrok warning page
+        },
+      });
 
       if (!response.ok) {
         return null;
@@ -719,7 +729,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-blue-600 dark:text-blue-400 font-bold">2.</span>
-                  <span>For text search: enter descriptive text like "beach sunset" or "mountain landscape"</span>
+                  <span>For text search: enter descriptive text like &quot;beach sunset&quot; or &quot;mountain landscape&quot;</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-blue-600 dark:text-blue-400 font-bold">3.</span>

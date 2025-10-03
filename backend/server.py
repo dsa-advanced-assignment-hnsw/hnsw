@@ -11,7 +11,13 @@ import base64
 import io
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend requests
+# Enable CORS with explicit configuration for Ngrok compatibility
+CORS(app, 
+     origins=['*'],  # Allow all origins (restrict in production)
+     allow_headers=['Content-Type', 'ngrok-skip-browser-warning'],  # Allow custom headers
+    #  allow_headers=['Content-Type'],  # Allow custom headers
+     methods=['GET', 'POST', 'OPTIONS'],  # Explicitly allow OPTIONS for preflight
+     supports_credentials=False)
 
 class SearchEngine:
     def __init__(self):
