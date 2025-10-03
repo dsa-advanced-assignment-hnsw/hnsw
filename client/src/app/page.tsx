@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { ModeToggle } from '@/components/ui/mode-toogle';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircleIcon, Terminal } from 'lucide-react';
+// import SplashCursor from '@/components/SplashCursor';
 
 interface SearchResult {
   path: string;
@@ -402,16 +406,24 @@ export default function Home() {
   };
 
   return (
+    
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      {/* <SplashCursor/> */}
+      
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4 h-full">
-            HNSW Image Search Engine
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 text-lg">
-            Search for images using natural language or upload an image to find similar ones
-          </p>
+          <div className="relative">
+            <div className="absolute top-0 right-0">
+              <ModeToggle />
+            </div>
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4 h-full">
+              HNSW Image Search Engine
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 text-lg">
+              Search for images using natural language or upload an image to find similar ones
+            </p>
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -461,7 +473,7 @@ export default function Home() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                    className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:cursor-pointer"
                   >
                     {loading ? (
                       <span className="flex items-center gap-2">
@@ -529,7 +541,7 @@ export default function Home() {
                     <button
                       type="submit"
                       disabled={loading || !uploadedImage}
-                      className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                      className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:cursor-pointer"
                     >
                       {loading ? (
                         <span className="flex items-center gap-2">
@@ -744,11 +756,11 @@ export default function Home() {
                   <span>Click search and browse similar images ranked by similarity score</span>
                 </li>
               </ul>
-              <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              {/* <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <p className="text-sm text-blue-800 dark:text-blue-300">
                   <strong>Note:</strong> Make sure the Flask backend is running on port 5000. Both text and image searches use CLIP embeddings for accurate results.
                 </p>
-              </div>
+              </div> */}
             </div>
           </div>
         )}
