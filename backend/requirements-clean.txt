@@ -1,0 +1,22 @@
+# HNSW Image Search Backend Requirements
+# Core dependencies for the image search engine
+
+# Web framework
+flask==3.0.0
+flask-cors==4.0.0
+
+# Machine Learning & AI
+torch>=2.0.0
+torchvision>=0.15.0
+git+https://github.com/openai/CLIP.git
+
+# Vector search
+hnswlib>=0.8.0
+
+# Data handling
+numpy>=1.24.0
+h5py>=3.8.0
+Pillow>=9.5.0
+
+# Optional: Production server
+gunicorn>=21.0.0
