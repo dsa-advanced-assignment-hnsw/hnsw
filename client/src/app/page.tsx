@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { ModeToggle } from '@/components/ui/mode-toogle';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircleIcon, Terminal } from 'lucide-react';
 // import SplashCursor from '@/components/SplashCursor';
 
 interface SearchResult {
@@ -38,19 +36,29 @@ function ImageDisplay({
 }) {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const fetchImage = async () => {
+    setLoading(true);
+    const data = await loadImageData(path);
+    if (data) {
+      setImageSrc(data);
+    } else {
+      handleImageError(index);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const fetchImage = async () => {
-      const data = await loadImageData(path);
-      if (data) {
-        setImageSrc(data);
-      } else {
-        handleImageError(index);
-      }
-      setLoading(false);
-    };
     fetchImage();
   }, [path, index, loadImageData, handleImageError]);
+
+  const handleRetry = () => {
+    if (retryCount < 3) { // Limit retries to prevent infinite loops
+      setRetryCount(prev => prev + 1);
+      fetchImage();
+    }
+  };
 
   if (imageErrors.has(index)) {
     return (
@@ -73,7 +81,7 @@ function ImageDisplay({
         <div className="w-full h-full flex items-center justify-center">
           <svg className="animate-spin h-8 w-8 text-gray-400" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
           </svg>
         </div>
       ) : imageSrc ? (
@@ -85,7 +93,20 @@ function ImageDisplay({
           className="object-cover"
           unoptimized
         />
-      ) : null}
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 text-xs p-2">
+          <div className="mb-2 text-center">Failed to load image</div>
+          <div className="mb-2 text-center break-all">{path}</div>
+          {retryCount < 3 && (
+            <button
+              onClick={handleRetry}
+              className="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
+            >
+              Retry ({retryCount}/3)
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -229,7 +250,7 @@ export default function Home() {
       setResults(data.results);
       setLastQuery({ type: 'text', value: query });
     } catch (err) {
-      setError('Failed to search images. Please make sure the backend server is running.');
+      // setError('Failed to search images. Please make sure the backend server is running.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -345,8 +366,39 @@ export default function Home() {
     setImageErrors(prev => new Set(prev).add(index));
   };
 
-  const loadImageData = async (path: string): Promise<string | null> => {
-    // Check cache first
+  // Card image loader
+  const loadImageData = async (path: string) => {
+    if (imageDataCache.has(path)) {
+      return imageDataCache.get(path)!;
+    }
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      // const apiUrl = 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/image/${path}`, {
+        headers: {
+          'ngrok-skip-browser-warning': 'true', // Skip Ngrok warning page
+        },
+      });
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const data: ImageData = await response.json();
+
+      // Cache the image data
+      setImageDataCache(prev => new Map(prev).set(path, data.image_data));
+
+      return data.image_data;
+    } catch (err) {
+      console.error(`Error loading image ${path}:`, err);
+      return null;
+    }
+  };
+
+  // Modal image loader (ensure it also updates cache)
+  const handleModalImageLoad = async (path: string) => {
     if (imageDataCache.has(path)) {
       return imageDataCache.get(path)!;
     }
@@ -664,7 +716,7 @@ export default function Home() {
 
                   <ModalImageDisplay
                     path={selectedImage.result.path}
-                    loadImageData={loadImageData}
+                    loadImageData={handleModalImageLoad}
                     onImageLoad={setModalImageInfo}
                   />
 
