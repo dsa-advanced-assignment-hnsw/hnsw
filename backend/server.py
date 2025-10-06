@@ -291,10 +291,15 @@ def health_check():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('FLASK_ENV', 'development') == 'development'
+    # Use environment variable to control debug mode
+    # Set FLASK_DEBUG=1 to enable debug mode, otherwise it's disabled
+    # debug = os.environ.get('FLASK_DEBUG', '0') == '1'
+    debug = False
     
     print(f"🌐 Starting Flask server on http://0.0.0.0:{port}")
     print(f"🔧 Debug mode: {debug}")
+    if debug:
+        print("⚠️  Debug mode enabled - server will restart on file changes")
     print(f"📡 Access the API at: http://localhost:{port}/health")
     print("\nPress Ctrl+C to stop the server\n")
     
