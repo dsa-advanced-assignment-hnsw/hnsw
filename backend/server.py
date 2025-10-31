@@ -38,7 +38,7 @@ class SearchEngine:
         try:
             print("📂 Loading image embeddings from HDF5 file...")
             # Load embeddings and paths
-            with h5py.File("images_embeds1.h5", "r") as f:
+            with h5py.File("images_embeds.h5", "r") as f:
                 self.image_paths = f["image_path"][:]
                 print(f"   → Loaded {len(self.image_paths)} image paths")
                 embs = f["embeddings"][:]

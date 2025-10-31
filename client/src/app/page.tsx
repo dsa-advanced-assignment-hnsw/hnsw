@@ -622,12 +622,13 @@ export default function Home() {
                   id="k-input"
                   type="number"
                   min="1"
+                  max="100"
                   value={k}
-                  onChange={(e) => setK(Math.max(1, parseInt(e.target.value) || 1))}
+                  onChange={(e) => setK(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
                   className="w-24 px-4 py-2 rounded-lg border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-center focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-lg hover:border-gray-300 dark:hover:border-gray-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                  (min: 1)
+                  (1-100)
                 </div>
               </div>
             </div>
