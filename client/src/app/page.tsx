@@ -8,6 +8,7 @@ import { ModeToggle } from '@/components/ui/mode-toogle';
 interface SearchResult {
   path: string;
   score: number;
+  image_data?: string | null; // Optional: prefetched image data from server
 }
 
 interface SearchResponse {
@@ -24,23 +25,30 @@ interface ImageData {
 function ImageDisplay({
   path,
   index,
+  prefetchedData,
   loadImageData,
   imageErrors,
   handleImageError
 }: {
   path: string;
   index: number;
-  loadImageData: (path: string) => Promise<string | null>;
+  prefetchedData?: string | null;
+  loadImageData: (path: string, prefetchedData?: string | null) => Promise<string | null>;
   imageErrors: Set<number>;
   handleImageError: (index: number) => void;
 }) {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
+  const [hasFetched, setHasFetched] = useState(false);
 
   const fetchImage = async () => {
+    if (hasFetched) return; // Prevent duplicate fetches
+
     setLoading(true);
-    const data = await loadImageData(path);
+    setHasFetched(true);
+
+    const data = await loadImageData(path, prefetchedData);
     if (data) {
       setImageSrc(data);
     } else {
@@ -51,12 +59,22 @@ function ImageDisplay({
 
   useEffect(() => {
     fetchImage();
-  }, [path, index, loadImageData, handleImageError]);
+  }, [path]); // Only depend on path, not on functions
 
   const handleRetry = () => {
     if (retryCount < 3) { // Limit retries to prevent infinite loops
       setRetryCount(prev => prev + 1);
-      fetchImage();
+      setHasFetched(false); // Reset fetch flag to allow retry
+      setLoading(true);
+      // Trigger re-fetch by calling loadImageData directly
+      loadImageData(path).then(data => {
+        if (data) {
+          setImageSrc(data);
+        } else {
+          handleImageError(index);
+        }
+        setLoading(false);
+      });
     }
   };
 
@@ -137,7 +155,7 @@ function ModalImageDisplay({
       setLoading(false);
     };
     fetchImage();
-  }, [path, loadImageData]);
+  }, [path]); // Only depend on path, not on loadImageData function
 
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.target as HTMLImageElement;
@@ -187,12 +205,15 @@ function ModalImageDisplay({
 export default function Home() {
   const [query, setQuery] = useState('');
   const [k, setK] = useState(20);
+  const [kError, setKError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
   const [imageDataCache, setImageDataCache] = useState<Map<string, string>>(new Map());
+  const [imageRetryCount, setImageRetryCount] = useState<Map<string, number>>(new Map()); // Track retries per URL
   const [selectedImage, setSelectedImage] = useState<{ result: SearchResult; index: number } | null>(null);
   const [modalImageInfo, setModalImageInfo] = useState<{ width: number; height: number } | null>(null);
   const [downloadingImage, setDownloadingImage] = useState(false);
@@ -206,8 +227,42 @@ export default function Home() {
   // const [displayType, setDisplayType] = useState<'text' | 'image'>('text');
   const [animationState, setAnimationState] = useState<'enter' | 'exit' | 'hidden'>('enter');
 
+  const IMAGES_PER_PAGE = 20;
+
+  const validateK = (value: number): boolean => {
+    if (isNaN(value) || value !== Math.floor(value)) {
+      setKError('Please enter a valid integer');
+      return false;
+    }
+    if (value <= 0) {
+      setKError('Number of results must be positive');
+      return false;
+    }
+    setKError('');
+    return true;
+  };
+
+  const handleKChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '') {
+      setK(20);
+      setKError('');
+      return;
+    }
+
+    const numValue = Number(value);
+    setK(numValue);
+    validateK(numValue);
+  };
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate k before searching
+    if (!validateK(k)) {
+      setError(kError);
+      return;
+    }
 
     if (searchType === 'text') {
       if (!query.trim()) {
@@ -228,7 +283,9 @@ export default function Home() {
     setLoading(true);
     setError('');
     setSearched(true);
+    setCurrentPage(1); // Reset to first page on new search
     setImageErrors(new Set()); // Reset image errors on new search
+    setImageRetryCount(new Map()); // Reset retry counts on new search
 
     try {
       // const apiUrl = 'http://localhost:5000';
@@ -263,7 +320,9 @@ export default function Home() {
     setLoading(true);
     setError('');
     setSearched(true);
+    setCurrentPage(1); // Reset to first page on new search
     setImageErrors(new Set()); // Reset image errors on new search
+    setImageRetryCount(new Map()); // Reset retry counts on new search
 
     try {
       // const apiUrl = 'http://localhost:5000';
@@ -367,21 +426,49 @@ export default function Home() {
   };
 
   // Card image loader
-  const loadImageData = async (path: string) => {
+  const loadImageData = async (path: string, prefetchedData?: string | null, retryAttempt: number = 0) => {
+    // If image was prefetched by server, use it directly
+    if (prefetchedData !== undefined) {
+      if (prefetchedData) {
+        // Cache the prefetched data
+        setImageDataCache(prev => new Map(prev).set(path, prefetchedData));
+        return prefetchedData;
+      } else {
+        // Server tried to fetch but failed
+        return null;
+      }
+    }
+
+    // Check cache first
     if (imageDataCache.has(path)) {
       return imageDataCache.get(path)!;
     }
 
+    // Check if we've exceeded max retries for this URL
+    const currentRetries = imageRetryCount.get(path) || 0;
+    if (currentRetries >= 3) {
+      console.log(`Max retries (3) reached for ${path.substring(0, 80)}...`);
+      return null;
+    }
+
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      // const apiUrl = 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/image/${path}`, {
+
+      // Check if path is a URL (for v2 backend) or local path (for v1 backend)
+      const isUrl = path.startsWith('http://') || path.startsWith('https://');
+      const endpoint = isUrl
+        ? `${apiUrl}/image-proxy?url=${encodeURIComponent(path.trim())}`
+        : `${apiUrl}/image/${path}`;
+
+      const response = await fetch(endpoint, {
         headers: {
           'ngrok-skip-browser-warning': 'true', // Skip Ngrok warning page
         },
       });
 
       if (!response.ok) {
+        // Increment retry count
+        setImageRetryCount(prev => new Map(prev).set(path, currentRetries + 1));
         return null;
       }
 
@@ -390,42 +477,26 @@ export default function Home() {
       // Cache the image data
       setImageDataCache(prev => new Map(prev).set(path, data.image_data));
 
+      // Reset retry count on success
+      setImageRetryCount(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(path);
+        return newMap;
+      });
+
       return data.image_data;
     } catch (err) {
-      console.error(`Error loading image ${path}:`, err);
+      console.error(`Error loading image ${path.substring(0, 80)}...:`, err);
+      // Increment retry count on error
+      setImageRetryCount(prev => new Map(prev).set(path, currentRetries + 1));
       return null;
     }
   };
 
   // Modal image loader (ensure it also updates cache)
   const handleModalImageLoad = async (path: string) => {
-    if (imageDataCache.has(path)) {
-      return imageDataCache.get(path)!;
-    }
-
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      // const apiUrl = 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/image/${path}`, {
-        headers: {
-          'ngrok-skip-browser-warning': 'true', // Skip Ngrok warning page
-        },
-      });
-
-      if (!response.ok) {
-        return null;
-      }
-
-      const data: ImageData = await response.json();
-
-      // Cache the image data
-      setImageDataCache(prev => new Map(prev).set(path, data.image_data));
-
-      return data.image_data;
-    } catch (err) {
-      console.error(`Error loading image ${path}:`, err);
-      return null;
-    }
+    // Reuse the same loadImageData function for consistency
+    return loadImageData(path);
   };
 
   const downloadImage = async (path: string) => {
@@ -621,15 +692,20 @@ export default function Home() {
                 <input
                   id="k-input"
                   type="number"
-                  min="1"
-                  max="100"
                   value={k}
-                  onChange={(e) => setK(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
-                  className="w-24 px-4 py-2 rounded-lg border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-center focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-lg hover:border-gray-300 dark:hover:border-gray-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  onChange={handleKChange}
+                  className={`w-32 px-4 py-2 rounded-lg border-2 ${kError ? 'border-red-500 dark:border-red-400' : 'border-gray-200 dark:border-gray-700'} bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-center focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-lg hover:border-gray-300 dark:hover:border-gray-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                 />
-                <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                  (1-100)
-                </div>
+                {kError && (
+                  <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-red-500 dark:text-red-400 whitespace-nowrap">
+                    {kError}
+                  </div>
+                )}
+                {!kError && (
+                  <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    (positive integers only)
+                  </div>
+                )}
               </div>
             </div>
 
@@ -656,42 +732,76 @@ export default function Home() {
                 <span>image &quot;{lastQuery.value}&quot;</span>
               )}
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {results.map((result, index) => (
-                <div
-                  key={index}
-                  className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all transform hover:scale-105 border border-gray-200 dark:border-gray-700 cursor-pointer"
-                  onClick={() => setSelectedImage({ result, index })}
+
+            {/* Pagination Controls - Top */}
+            {results.length > IMAGES_PER_PAGE && (
+              <div className="flex justify-center items-center gap-4 mb-6">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
                 >
-                  <ImageDisplay
-                    path={result.path}
-                    index={index}
-                    loadImageData={loadImageData}
-                    imageErrors={imageErrors}
-                    handleImageError={handleImageError}
-                  />
-                  <div className="p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                        Similarity
-                      </span>
-                      <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                        {(result.score * 100).toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div
-                        className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all"
-                        style={{ width: `${result.score * 100}%` }}
+                  Previous
+                </button>
+                <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                  Page {currentPage} of {Math.ceil(results.length / IMAGES_PER_PAGE)}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(results.length / IMAGES_PER_PAGE), p + 1))}
+                  disabled={currentPage === Math.ceil(results.length / IMAGES_PER_PAGE)}
+                  className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {results
+                .slice((currentPage - 1) * IMAGES_PER_PAGE, currentPage * IMAGES_PER_PAGE)
+                .map((result, index) => {
+                  const actualIndex = (currentPage - 1) * IMAGES_PER_PAGE + index;
+                  return (
+                    <div
+                      key={actualIndex}
+                      className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all transform hover:scale-105 border border-gray-200 dark:border-gray-700 cursor-pointer"
+                      onClick={() => setSelectedImage({ result, index: actualIndex })}
+                    >
+                      <ImageDisplay
+                        path={result.path}
+                        index={actualIndex}
+                        prefetchedData={result.image_data}
+                        loadImageData={loadImageData}
+                        imageErrors={imageErrors}
+                        handleImageError={handleImageError}
                       />
                     </div>
-                    {/* <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 truncate" title={result.path}>
-                  {result.path.split('/').pop()}
-                </p> */}
-                  </div>
-                </div>
-              ))}
+                  );
+                })}
             </div>
+
+            {/* Pagination Controls - Bottom */}
+            {results.length > IMAGES_PER_PAGE && (
+              <div className="flex justify-center items-center gap-4 mt-6">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                  Page {currentPage} of {Math.ceil(results.length / IMAGES_PER_PAGE)}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(results.length / IMAGES_PER_PAGE), p + 1))}
+                  disabled={currentPage === Math.ceil(results.length / IMAGES_PER_PAGE)}
+                  className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
+                >
+                  Next
+                </button>
+              </div>
+            )}
 
             {/* Image Modal */}
             {selectedImage && (
@@ -724,12 +834,17 @@ export default function Home() {
                   {/* Image info and controls */}
                   <div className="p-6 bg-white dark:bg-gray-800">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                          {selectedImage.result.path.split('/').pop()}
-                        </h3>
+                      <div className="flex-1 min-w-0">
+                        <a
+                          href={selectedImage.result.path}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-lg font-semibold text-blue-600 dark:text-blue-400 hover:underline mb-2 block truncate"
+                          title={selectedImage.result.path}
+                        >
+                          {selectedImage.result.path}
+                        </a>
                         <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
-                          <span>Similarity: {(selectedImage.result.score * 100).toFixed(1)}%</span>
                           {modalImageInfo && (
                             <span>Resolution: {modalImageInfo.width} × {modalImageInfo.height}</span>
                           )}
