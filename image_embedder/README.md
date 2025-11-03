@@ -1,8 +1,8 @@
-# Image Embedding Pipeline (CLIP & Open Images V7)
+# Image Embedder (CLIP & Open Images V7)
 
 This repository contains a Jupyter Notebook (`image_embedder.ipynb`) that implements a complete, fault-tolerant pipeline for generating image embeddings.
 
-The pipeline downloads image metadata from the Open Images V7 dataset, fetches the corresponding images, processes them using OpenAI's **CLIP (ViT-B/32)** model, and stores the resulting URL-vector pairs in HDF5 files.
+The pipeline downloads image metadata from the **Open Images V7** dataset, fetches the corresponding images, processes them using OpenAI's **CLIP (ViT-B/32)** model, and stores the resulting URL-vector pairs in HDF5 files.
 
 ##  workflow-diagram How It Works
 
