@@ -90,3 +90,6 @@ htmlcov/
 *.md
 !README.md
 !**/README.md
+
+#Cache
+*/.cache
