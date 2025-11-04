@@ -1,0 +1,13 @@
+torch
+numpy
+h5py
+tqdm
+PyMuPDF
+sentence-transformers
+Pillow
+ftfy
+regex
+clip-anytorch
+python-docx
+bs4
+scikit-learn
