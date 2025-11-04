@@ -28,6 +28,7 @@ CORS(app,
 IMAGE_CACHE_SIZE_MB = int(os.environ.get('IMAGE_CACHE_SIZE_MB', 100))
 IMAGE_FETCH_TIMEOUT = int(os.environ.get('IMAGE_FETCH_TIMEOUT', 10))
 H5_FILE_PATH = os.environ.get('H5_FILE_PATH', 'Images_Embedbed_0-100000.h5')
+# H5_FILE_PATH = os.environ.get('H5_FILE_PATH', 'images_embed.h5')
 MAX_HNSW_ELEMENTS = int(os.environ.get('MAX_HNSW_ELEMENTS', 2000000))  # 2M capacity for 1.5M images
 PREFETCH_IMAGES = os.environ.get('PREFETCH_IMAGES', 'false').lower() == 'true'  # Prefetch images in search results
 
