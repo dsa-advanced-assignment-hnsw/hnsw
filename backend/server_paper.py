@@ -10,7 +10,7 @@ import io
 
 app = Flask(__name__)
 CORS(app, origins=['*'])
-H5_FILE_PATH='Papers_Embedbed_0-1000000.h5'
+H5_FILE_PATH='Papers_Embedbed_0-100000.h5'
 os.environ['H5_FILE_PATH'] = H5_FILE_PATH
 
 class PaperSearchEngine:
