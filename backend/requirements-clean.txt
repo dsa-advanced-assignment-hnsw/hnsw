@@ -1,25 +1,36 @@
-# HNSW Image Search Backend Requirements
-# Core dependencies for the image search engine
+# HNSW Semantic Search Backend Requirements (Clean Version)
+# Minimal dependencies for both image and paper search engines
+# Recommended for production deployments
 
-# Web framework
+# Web Framework
 flask==3.0.0
 flask-cors==4.0.0
+Werkzeug==3.0.1
 
-# Machine Learning & AI
+# Machine Learning & AI - Image Search
 torch>=2.0.0
 torchvision>=0.15.0
 git+https://github.com/openai/CLIP.git
 
-# Vector search
+# Machine Learning & AI - Paper Search
+sentence-transformers>=2.2.0
+
+# Vector Search
 hnswlib>=0.8.0
 
-# Data handling
-numpy>=1.24.0
+# Data Handling
+numpy>=1.24.0,<2.0.0
 h5py>=3.8.0
 Pillow>=9.5.0
 
-# HTTP client for fetching images from online sources
+# Document Processing (for paper search)
+PyPDF2>=3.0.0
+
+# HTTP Client (for fetching images from online sources)
 requests>=2.31.0
 
-# Optional: Production server
+# Utilities
+tqdm>=4.65.0
+
+# Production Server (optional)
 gunicorn>=21.0.0

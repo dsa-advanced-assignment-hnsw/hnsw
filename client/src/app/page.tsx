@@ -17,6 +17,18 @@ interface SearchResponse {
   total: number;
 }
 
+interface PaperResult {
+  url: string;
+  similarity: number;
+}
+
+interface PaperSearchResponse {
+  query?: string;
+  filename?: string;
+  k: number;
+  results: PaperResult[];
+}
+
 interface ImageData {
   image_data: string;
   path: string;
@@ -203,6 +215,10 @@ function ModalImageDisplay({
 }
 
 export default function Home() {
+  // Main mode: 'image' or 'paper'
+  const [searchMode, setSearchMode] = useState<'image' | 'paper'>('image');
+
+  // Image search states
   const [query, setQuery] = useState('');
   const [k, setK] = useState(20);
   const [kError, setKError] = useState('');
@@ -226,6 +242,19 @@ export default function Home() {
   const [animationKey, setAnimationKey] = useState(0);
   // const [displayType, setDisplayType] = useState<'text' | 'image'>('text');
   const [animationState, setAnimationState] = useState<'enter' | 'exit' | 'hidden'>('enter');
+
+  // Paper search states
+  const [paperQuery, setPaperQuery] = useState('');
+  const [paperK, setPaperK] = useState(20);
+  const [paperKError, setPaperKError] = useState('');
+  const [paperResults, setPaperResults] = useState<PaperResult[]>([]);
+  const [paperLoading, setPaperLoading] = useState(false);
+  const [paperError, setPaperError] = useState('');
+  const [paperSearched, setPaperSearched] = useState(false);
+  const [paperSearchType, setPaperSearchType] = useState<'text' | 'file'>('text');
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [paperLastQuery, setPaperLastQuery] = useState<{ type: 'text' | 'file', value: string }>({ type: 'text', value: '' });
+  const [paperCurrentPage, setPaperCurrentPage] = useState(1);
 
   const IMAGES_PER_PAGE = 20;
 
@@ -394,27 +423,27 @@ export default function Home() {
 
   const handleSearchTypeChange = (newType: 'text' | 'image') => {
     if (newType === searchType || isTransitioning) return;
-    
+
     setIsTransitioning(true);
     setAnimationState('exit');
-    
+
     // Wait for exit animation to complete
     setTimeout(() => {
       setSearchType(newType);
       // setDisplayType(newType);
       setAnimationKey(prev => prev + 1);
-      
+
       // Clear any previous errors when switching
       setError('');
-      
+
       // Reset upload if switching away from image search
       if (newType === 'text') {
         clearUploadedImage();
       }
-      
+
       // Start enter animation
       setAnimationState('enter');
-      
+
       setTimeout(() => {
         setIsTransitioning(false);
       }, 50);
@@ -528,11 +557,179 @@ export default function Home() {
     }, 300); // Match the animation duration
   };
 
+  // Paper search functions
+  const PAPERS_PER_PAGE = 20;
+
+  const validatePaperK = (value: number): boolean => {
+    if (isNaN(value) || value !== Math.floor(value)) {
+      setPaperKError('Please enter a valid integer');
+      return false;
+    }
+    if (value <= 0) {
+      setPaperKError('Number of results must be positive');
+      return false;
+    }
+    setPaperKError('');
+    return true;
+  };
+
+  const handlePaperKChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '') {
+      setPaperK(20);
+      setPaperKError('');
+      return;
+    }
+
+    const numValue = Number(value);
+    setPaperK(numValue);
+    validatePaperK(numValue);
+  };
+
+  const handlePaperSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validatePaperK(paperK)) {
+      setPaperError(paperKError);
+      return;
+    }
+
+    if (paperSearchType === 'text') {
+      if (!paperQuery.trim()) {
+        setPaperError('Please enter a search query');
+        return;
+      }
+      await performPaperTextSearch();
+    } else {
+      if (!uploadedFile) {
+        setPaperError('Please upload a file to search');
+        return;
+      }
+      await performPaperFileSearch();
+    }
+  };
+
+  const performPaperTextSearch = async () => {
+    setPaperLoading(true);
+    setPaperError('');
+    setPaperSearched(true);
+    setPaperCurrentPage(1);
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_PAPER_API_URL || 'http://localhost:5001';
+      const response = await fetch(`${apiUrl}/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: JSON.stringify({ query: paperQuery, k: paperK }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Paper search failed');
+      }
+
+      const data: PaperSearchResponse = await response.json();
+      setPaperResults(data.results);
+      setPaperLastQuery({ type: 'text', value: paperQuery });
+    } catch (err) {
+      setPaperError('Failed to search papers. Please make sure the backend server is running.');
+      console.error(err);
+    } finally {
+      setPaperLoading(false);
+    }
+  };
+
+  const performPaperFileSearch = async () => {
+    if (!uploadedFile) return;
+
+    setPaperLoading(true);
+    setPaperError('');
+    setPaperSearched(true);
+    setPaperCurrentPage(1);
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_PAPER_API_URL || 'http://localhost:5001';
+      const formData = new FormData();
+      formData.append('file', uploadedFile);
+      formData.append('k', paperK.toString());
+
+      const response = await fetch(`${apiUrl}/search/file`, {
+        method: 'POST',
+        headers: {
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('File-based paper search failed');
+      }
+
+      const data: PaperSearchResponse = await response.json();
+      setPaperResults(data.results);
+      setPaperLastQuery({ type: 'file', value: uploadedFile.name });
+    } catch (err) {
+      setPaperError('Failed to search with file. Please make sure the backend server is running.');
+      console.error(err);
+    } finally {
+      setPaperLoading(false);
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const allowedTypes = ['text/plain', 'application/pdf', 'text/markdown'];
+      const allowedExtensions = ['.txt', '.pdf', '.md'];
+      const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+
+      if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+        setPaperError('Invalid file type. Please upload .txt, .pdf, or .md files.');
+        return;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        setPaperError('File too large. Please upload a file smaller than 10MB.');
+        return;
+      }
+
+      setUploadedFile(file);
+      setPaperError('');
+    }
+  };
+
+  const clearUploadedFile = () => {
+    setUploadedFile(null);
+    const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  };
+
+  const handlePaperSearchTypeChange = (newType: 'text' | 'file') => {
+    if (newType === paperSearchType) return;
+    setPaperSearchType(newType);
+    setPaperError('');
+    if (newType === 'text') {
+      clearUploadedFile();
+    }
+  };
+
+  const handleSearchModeChange = (newMode: 'image' | 'paper') => {
+    if (newMode === searchMode) return;
+    setSearchMode(newMode);
+    // Reset errors when switching modes
+    setError('');
+    setPaperError('');
+  };
+
   return (
-    
+
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       {/* <SplashCursor/> */}
-      
+
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <div className="text-center mb-12">
@@ -541,16 +738,49 @@ export default function Home() {
               <ModeToggle />
             </div>
             <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4 h-full">
-              HNSW Image Search Engine
+              HNSW Search Engine
             </h1>
             <p className="text-gray-600 dark:text-gray-400 text-lg">
-              Search for images using natural language or upload an image to find similar ones
+              {searchMode === 'image'
+                ? 'Search for images using natural language or upload an image to find similar ones'
+                : 'Search for academic papers using keywords or upload a document to find similar papers'}
             </p>
           </div>
         </div>
 
-        {/* Search Bar */}
-        <form onSubmit={handleSearch} className="mb-12">
+        {/* Main Mode Toggle - Image vs Paper */}
+        <div className="flex justify-center mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-full p-1 shadow-lg border border-gray-200 dark:border-gray-700">
+            <button
+              type="button"
+              onClick={() => handleSearchModeChange('image')}
+              className={`px-8 py-3 rounded-full font-semibold transition-all duration-300 ${
+                searchMode === 'image'
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md transform scale-105'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+              }`}
+            >
+              🖼️ Image Search Engine
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSearchModeChange('paper')}
+              className={`px-8 py-3 rounded-full font-semibold transition-all duration-300 ${
+                searchMode === 'paper'
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md transform scale-105'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+              }`}
+            >
+              📄 Paper Search Engine
+            </button>
+          </div>
+        </div>
+
+        {/* Conditional Rendering based on searchMode */}
+        {searchMode === 'image' ? (
+          /* Image Search UI */
+          <>
+          <form onSubmit={handleSearch} className="mb-12">
           <div className="flex flex-col gap-6 max-w-4xl mx-auto">
             {/* Search Type Toggle */}
             <div className="flex justify-center">
@@ -559,8 +789,8 @@ export default function Home() {
                   type="button"
                   onClick={() => handleSearchTypeChange('text')}
                   className={`search-toggle-button px-6 hover:cursor-pointer py-3 rounded-full font-semibold transition-all duration-300 ${searchType === 'text'
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md transform scale-105'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md transform scale-105'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                 >
                   🔍 Text Search
@@ -569,8 +799,8 @@ export default function Home() {
                   type="button"
                   onClick={() => handleSearchTypeChange('image')}
                   className={`search-toggle-button px-6 hover:cursor-pointer py-3 rounded-full font-semibold transition-all duration-300 ${searchType === 'image'
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md transform scale-105'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md transform scale-105'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                 >
                   🖼️ Image Search
@@ -579,11 +809,10 @@ export default function Home() {
             </div>
 
             {/* Search Input */}
-            <div key={animationKey} className={`${
-              animationState === 'exit' ? 'search-content-exit' : 
-              animationState === 'enter' ? 'search-content-enter' : 
-              'search-content-hidden'
-            }`}>
+            <div key={animationKey} className={`${animationState === 'exit' ? 'search-content-exit' :
+                animationState === 'enter' ? 'search-content-enter' :
+                  'search-content-hidden'
+              }`}>
               {searchType === 'text' ? (
                 <div className='flex gap-4 ' id='textSearch'>
                   <input
@@ -924,13 +1153,344 @@ export default function Home() {
                   <span>Click search and browse similar images ranked by similarity score</span>
                 </li>
               </ul>
-              {/* <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <p className="text-sm text-blue-800 dark:text-blue-300">
-                  <strong>Note:</strong> Make sure the Flask backend is running on port 5000. Both text and image searches use CLIP embeddings for accurate results.
-                </p>
-              </div> */}
             </div>
           </div>
+        )}
+          </>
+        ) : (
+          /* Paper Search UI */
+          <>
+            <form onSubmit={handlePaperSearch} className="mb-12">
+              <div className="flex flex-col gap-6 max-w-4xl mx-auto">
+                {/* Paper Search Type Toggle */}
+                <div className="flex justify-center">
+                  <div className="bg-white dark:bg-gray-800 rounded-full p-1 shadow-lg border border-gray-200 dark:border-gray-700">
+                    <button
+                      type="button"
+                      onClick={() => handlePaperSearchTypeChange('text')}
+                      className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
+                        paperSearchType === 'text'
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md transform scale-105'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      🔍 Text Search
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePaperSearchTypeChange('file')}
+                      className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
+                        paperSearchType === 'file'
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md transform scale-105'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      📁 File Search
+                    </button>
+                  </div>
+                </div>
+
+                {/* Paper Search Input */}
+                {paperSearchType === 'text' ? (
+                  <div className="flex gap-4">
+                    <input
+                      type="text"
+                      value={paperQuery}
+                      onChange={(e) => setPaperQuery(e.target.value)}
+                      placeholder="Search for papers... (e.g., 'machine learning', 'deep neural networks', 'quantum computing')"
+                      className="flex-1 px-6 py-4 rounded-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-all duration-300 shadow-lg hover:shadow-xl focus:shadow-xl"
+                    />
+                    <button
+                      type="submit"
+                      disabled={paperLoading}
+                      className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                    >
+                      {paperLoading ? (
+                        <span className="flex items-center gap-2">
+                          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Searching...
+                        </span>
+                      ) : (
+                        'Search'
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* File Upload Area */}
+                    <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl p-8 bg-white dark:bg-gray-800 transition-all duration-300 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-gray-750">
+                      {uploadedFile ? (
+                        <div className="flex flex-col items-center gap-4">
+                          <div className="bg-blue-100 dark:bg-blue-900/30 p-4 rounded-lg">
+                            <svg className="w-12 h-12 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          </div>
+                          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">{uploadedFile.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{(uploadedFile.size / 1024).toFixed(2)} KB</p>
+                          <button
+                            type="button"
+                            onClick={clearUploadedFile}
+                            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200 shadow-lg hover:shadow-xl"
+                          >
+                            Remove File
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <div className="mt-4">
+                            <label htmlFor="file-upload" className="cursor-pointer">
+                              <span className="text-blue-600 dark:text-blue-400 font-semibold hover:text-blue-700 dark:hover:text-blue-300">Upload a document</span>
+                              <span className="text-gray-600 dark:text-gray-400"> or drag and drop</span>
+                            </label>
+                            <input
+                              id="file-upload"
+                              type="file"
+                              className="hidden"
+                              accept=".txt,.pdf,.md"
+                              onChange={handleFileUpload}
+                            />
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">.txt, .pdf, .md up to 10MB</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Search Button for File */}
+                    <div className="flex justify-center">
+                      <button
+                        type="submit"
+                        disabled={paperLoading || !uploadedFile}
+                        className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                      >
+                        {paperLoading ? (
+                          <span className="flex items-center gap-2">
+                            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                            Searching...
+                          </span>
+                        ) : (
+                          'Find Similar Papers'
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Results Count Input */}
+                <div className="flex items-center gap-4 justify-center">
+                  <label htmlFor="paper-k-input" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Number of results:
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="paper-k-input"
+                      type="number"
+                      value={paperK}
+                      onChange={handlePaperKChange}
+                      className={`w-32 px-4 py-2 rounded-lg border-2 ${
+                        paperKError ? 'border-red-500 dark:border-red-400' : 'border-gray-200 dark:border-gray-700'
+                      } bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-center focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                    />
+                    {paperKError && (
+                      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-red-500 dark:text-red-400 whitespace-nowrap">
+                        {paperKError}
+                      </div>
+                    )}
+                    {!paperKError && (
+                      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                        (positive integers only)
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </form>
+
+            {/* Error Message */}
+            {paperError && (
+              <div className="max-w-3xl mx-auto mb-8 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
+                <p className="font-semibold">Error:</p>
+                <p>{paperError}</p>
+              </div>
+            )}
+
+            {/* Paper Results */}
+            {paperSearched && !paperLoading && paperResults.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-2xl font-semibold mb-6 text-gray-900 dark:text-white">
+                  Found {paperResults.length} paper{paperResults.length !== 1 ? 's' : ''} for{' '}
+                  {paperLastQuery.type === 'text' ? (
+                    <span>&quot;{paperLastQuery.value}&quot;</span>
+                  ) : (
+                    <span>file &quot;{paperLastQuery.value}&quot;</span>
+                  )}
+                </h2>
+
+                {/* Pagination Controls - Top */}
+                {paperResults.length > PAPERS_PER_PAGE && (
+                  <div className="flex justify-center items-center gap-4 mb-6">
+                    <button
+                      onClick={() => setPaperCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={paperCurrentPage === 1}
+                      className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                      Page {paperCurrentPage} of {Math.ceil(paperResults.length / PAPERS_PER_PAGE)}
+                    </span>
+                    <button
+                      onClick={() => setPaperCurrentPage(p => Math.min(Math.ceil(paperResults.length / PAPERS_PER_PAGE), p + 1))}
+                      disabled={paperCurrentPage === Math.ceil(paperResults.length / PAPERS_PER_PAGE)}
+                      className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+
+                {/* Paper Results List */}
+                <div className="space-y-4">
+                  {paperResults
+                    .slice((paperCurrentPage - 1) * PAPERS_PER_PAGE, paperCurrentPage * PAPERS_PER_PAGE)
+                    .map((result, index) => {
+                      const actualIndex = (paperCurrentPage - 1) * PAPERS_PER_PAGE + index;
+                      return (
+                        <div
+                          key={actualIndex}
+                          className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-2xl transition-all transform hover:scale-[1.02] border border-gray-200 dark:border-gray-700"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-3 mb-2">
+                                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                  #{actualIndex + 1}
+                                </span>
+                                <div className="flex-1">
+                                  <a
+                                    href={result.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-lg font-semibold text-blue-600 dark:text-blue-400 hover:underline block truncate"
+                                    title={result.url}
+                                  >
+                                    {result.url}
+                                  </a>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">Similarity Score:</span>
+                                  <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full font-semibold">
+                                    {(result.similarity * 100).toFixed(2)}%
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <a
+                              href={result.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 flex items-center gap-2 whitespace-nowrap"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                              View Paper
+                            </a>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                {/* Pagination Controls - Bottom */}
+                {paperResults.length > PAPERS_PER_PAGE && (
+                  <div className="flex justify-center items-center gap-4 mt-6">
+                    <button
+                      onClick={() => setPaperCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={paperCurrentPage === 1}
+                      className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                      Page {paperCurrentPage} of {Math.ceil(paperResults.length / PAPERS_PER_PAGE)}
+                    </span>
+                    <button
+                      onClick={() => setPaperCurrentPage(p => Math.min(Math.ceil(paperResults.length / PAPERS_PER_PAGE), p + 1))}
+                      disabled={paperCurrentPage === Math.ceil(paperResults.length / PAPERS_PER_PAGE)}
+                      className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* No Results */}
+            {paperSearched && !paperLoading && paperResults.length === 0 && !paperError && (
+              <div className="text-center py-12">
+                <p className="text-gray-500 dark:text-gray-400 text-lg">
+                  No results found for{' '}
+                  {paperLastQuery.type === 'text' ? (
+                    <span>&quot;{paperLastQuery.value}&quot;</span>
+                  ) : (
+                    <span>the uploaded file</span>
+                  )}
+                  . Try a different {paperLastQuery.type === 'text' ? 'search term' : 'file'}.
+                </p>
+              </div>
+            )}
+
+            {/* Instructions */}
+            {!paperSearched && (
+              <div className="max-w-3xl mx-auto mt-16">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-gray-700">
+                  <h3 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
+                    How to use
+                  </h3>
+                  <ul className="space-y-3 text-gray-600 dark:text-gray-400">
+                    <li className="flex items-start gap-3">
+                      <span className="text-blue-600 dark:text-blue-400 font-bold">1.</span>
+                      <span>Choose your search method: text query or file upload</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-blue-600 dark:text-blue-400 font-bold">2.</span>
+                      <span>For text search: enter keywords like &quot;machine learning&quot; or &quot;quantum computing&quot;</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-blue-600 dark:text-blue-400 font-bold">3.</span>
+                      <span>For file search: upload a document (.txt, .pdf, .md) to find similar papers</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-blue-600 dark:text-blue-400 font-bold">4.</span>
+                      <span>Set the number of results you want (positive integer, default: 20)</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-blue-600 dark:text-blue-400 font-bold">5.</span>
+                      <span>Click search and browse similar papers ranked by similarity score</span>
+                    </li>
+                  </ul>
+                  <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <p className="text-sm text-blue-800 dark:text-blue-300">
+                      <strong>Note:</strong> This search engine uses HNSW algorithm to search through 1 million arXiv papers using Sentence Transformer embeddings.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

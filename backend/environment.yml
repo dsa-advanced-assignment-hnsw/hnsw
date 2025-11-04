@@ -1,0 +1,51 @@
+name: hnsw-backend-venv
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+
+dependencies:
+  # Python version
+  - python=3.10
+
+  # Core scientific packages (install via conda for better compatibility)
+  - numpy>=1.24.0,<2.0.0
+  - h5py>=3.8.0
+  - pillow>=9.5.0
+  - requests>=2.31.0
+  - tqdm>=4.65.0
+
+  # PyTorch (install via conda for GPU support)
+  - pytorch>=2.0.0
+  - torchvision>=0.15.0
+  - pytorch-cuda=11.8  # Remove this line if you don't have CUDA GPU
+
+  # Pip packages that are not available or better installed via pip
+  - pip
+  - pip:
+    # Web Framework
+    - flask==3.0.0
+    - flask-cors==4.0.0
+    - Werkzeug==3.0.1
+
+    # CLIP (must be installed via pip from GitHub)
+    - git+https://github.com/openai/CLIP.git
+
+    # Sentence Transformers for paper search
+    - sentence-transformers>=2.2.0
+
+    # Vector search library
+    - hnswlib>=0.8.0
+
+    # Document processing
+    - PyPDF2>=3.0.0
+
+    # Production server (optional)
+    - gunicorn>=21.0.0
+
+# Notes:
+# 1. For CPU-only installation, remove the pytorch-cuda line
+# 2. For different CUDA versions, change pytorch-cuda version accordingly
+# 3. Create environment: conda env create -f environment.yml
+# 4. Activate: conda activate hnsw-backend-venv
+# 5. Update: conda env update -f environment.yml --prune

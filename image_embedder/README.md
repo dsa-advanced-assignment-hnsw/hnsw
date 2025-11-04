@@ -32,6 +32,23 @@ The notebook is designed as a fault-tolerant pipeline that operates in "chunks" 
 
 ---
 
+## 🚀 Using the Generated Embeddings
+
+Once you've generated the image embeddings using this notebook, you can use them with the Image Search backend:
+
+1. **Place HDF5 file**: Copy the generated `Images_Embedded.h5` file to the `backend/` directory
+2. **Rename file** (optional): Rename to `images_embeds_new.h5` for use with server_v2.py
+3. **Update backend code**: If using different filename, edit `backend/server_v2.py` line 245 or set `H5_FILE_PATH` environment variable:
+   ```python
+   h5_file_path = os.getenv('H5_FILE_PATH', 'images_embeds_new.h5')
+   ```
+4. **Start backend server**: Run `conda activate hnsw-backend-venv && python server_v2.py`
+5. **Connect frontend**: Set `NEXT_PUBLIC_API_URL` in `client/.env.local` and start the frontend
+
+For more details, see the main [README.md](../README.md) and [backend/README.md](../backend/README.md).
+
+**Note:** The current `images_embeds_new.h5` file contains URLs from multiple online sources (Flickr, Pinterest, etc.). If you want to use local images instead, use `server.py` (v1) which expects local file paths in the HDF5 file.
+
 ## ⚖️ Attribution and Licensing
 
 ### Project Code
