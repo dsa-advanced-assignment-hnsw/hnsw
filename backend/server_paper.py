@@ -10,7 +10,7 @@ import io
 
 app = Flask(__name__)
 CORS(app, origins=['*'])
-H5_FILE_PATH='Papers_Embedbed_0-100000.h5'
+H5_FILE_PATH='Papers_Embedbed_0-1000000.h5'
 os.environ['H5_FILE_PATH'] = H5_FILE_PATH
 
 class PaperSearchEngine:
@@ -31,6 +31,19 @@ class PaperSearchEngine:
         # Determine the .bin filename
         index_filename = os.path.splitext(h5_file_path)[0] + ".bin"
 
+        # Check if .h5 file exists (required for metadata and URLs)
+        if not os.path.exists(h5_file_path):
+            print(f"❌ Error: {h5_file_path} not found!")
+            print("   Please ensure the h5 file is in the backend directory")
+            raise FileNotFoundError(f"Required file not found: {h5_file_path}")
+
+        # Check if .bin file exists for faster index loading
+        bin_exists = os.path.exists(index_filename)
+        if bin_exists:
+            print(f"⚡ Found existing HNSW index: {index_filename}")
+        else:
+            print(f"📂 .bin file not found, will build index from embeddings")
+
         # Load embeddings and URLs from HDF5
         print(f"Loading embeddings from {h5_file_path}...")
         with h5py.File(h5_file_path, 'r') as f:
@@ -47,7 +60,6 @@ class PaperSearchEngine:
 
         # Check if .bin file exists for faster loading
         if os.path.exists(index_filename):
-            print(f"⚡ Found existing HNSW index: {index_filename}")
             print(f"Loading HNSW index from .bin file (fast mode)...")
             self.index = hnswlib.Index(space='cosine', dim=dim)
             self.index.load_index(index_filename, max_elements=max_elements)

@@ -727,7 +727,7 @@ export default function Home() {
 
   return (
 
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       {/* <SplashCursor/> */}
 
       <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -737,7 +737,7 @@ export default function Home() {
             <div className="absolute top-0 right-0">
               <ModeToggle />
             </div>
-            <h1 className="text-5xl font-bold text-gray-900 dark:text-white font-wide mb-4 h-full">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4 h-full">
               HNSW Search Engine
             </h1>
             <p className="text-gray-600 dark:text-gray-400 text-lg">
@@ -756,7 +756,7 @@ export default function Home() {
               onClick={() => handleSearchModeChange('image')}
               className={`px-8 py-3 rounded-full font-semibold transition-all duration-300 ${
                 searchMode === 'image'
-                  ? 'bg-blue-600 text-white shadow-md transform scale-105'
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md transform scale-105'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
@@ -767,7 +767,7 @@ export default function Home() {
               onClick={() => handleSearchModeChange('paper')}
               className={`px-8 py-3 rounded-full font-semibold transition-all duration-300 ${
                 searchMode === 'paper'
-                  ? 'bg-blue-600 text-white shadow-md transform scale-105'
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md transform scale-105'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
@@ -789,7 +789,7 @@ export default function Home() {
                   type="button"
                   onClick={() => handleSearchTypeChange('text')}
                   className={`search-toggle-button px-6 hover:cursor-pointer py-3 rounded-full font-semibold transition-all duration-300 ${searchType === 'text'
-                    ? 'bg-blue-600 text-white shadow-md transform scale-105'
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md transform scale-105'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                 >
@@ -799,7 +799,7 @@ export default function Home() {
                   type="button"
                   onClick={() => handleSearchTypeChange('image')}
                   className={`search-toggle-button px-6 hover:cursor-pointer py-3 rounded-full font-semibold transition-all duration-300 ${searchType === 'image'
-                    ? 'bg-blue-600 text-white shadow-md transform scale-105'
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md transform scale-105'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                 >
@@ -825,7 +825,7 @@ export default function Home() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-8 py-4 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:cursor-pointer"
+                    className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:cursor-pointer"
                   >
                     {loading ? (
                       <span className="flex items-center gap-2">
@@ -893,7 +893,7 @@ export default function Home() {
                     <button
                       type="submit"
                       disabled={loading || !uploadedImage}
-                      className="px-8 py-4 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:cursor-pointer"
+                      className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:cursor-pointer"
                     >
                       {loading ? (
                         <span className="flex items-center gap-2">
@@ -1082,7 +1082,7 @@ export default function Home() {
                       <button
                         onClick={() => downloadImage(selectedImage.result.path)}
                         disabled={downloadingImage}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all ease-in-out duration-200 transform hover:scale-105 flex items-center gap-2 hover:cursor-pointer"
+                        className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all ease-in-out duration-200 transform hover:scale-105 flex items-center gap-2 hover:cursor-pointer"
                       >
                         {downloadingImage ? (
                           <>
@@ -1170,7 +1170,7 @@ export default function Home() {
                       onClick={() => handlePaperSearchTypeChange('text')}
                       className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
                         paperSearchType === 'text'
-                          ? 'bg-blue-600 text-white shadow-md transform scale-105'
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md transform scale-105'
                           : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
                       }`}
                     >
@@ -1181,7 +1181,7 @@ export default function Home() {
                       onClick={() => handlePaperSearchTypeChange('file')}
                       className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
                         paperSearchType === 'file'
-                          ? 'bg-blue-600 text-white shadow-md transform scale-105'
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md transform scale-105'
                           : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
                       }`}
                     >
@@ -1203,7 +1203,7 @@ export default function Home() {
                     <button
                       type="submit"
                       disabled={paperLoading}
-                      className="px-8 py-4 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                      className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
                     >
                       {paperLoading ? (
                         <span className="flex items-center gap-2">
@@ -1267,7 +1267,7 @@ export default function Home() {
                       <button
                         type="submit"
                         disabled={paperLoading || !uploadedFile}
-                        className="px-8 py-4 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                        className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
                       >
                         {paperLoading ? (
                           <span className="flex items-center gap-2">
@@ -1400,7 +1400,7 @@ export default function Home() {
                               href={result.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 flex items-center gap-2 whitespace-nowrap"
+                              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 flex items-center gap-2 whitespace-nowrap"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
