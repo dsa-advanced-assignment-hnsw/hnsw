@@ -25,7 +25,7 @@
 
 ---
 
-### 🎯 **[Live Demo](#) | [Documentation](./CLAUDE.md) | [API Docs](./backend/README.md)**
+### 🎯 **[Live Demo](#) | [Documentation](./) | [API Docs](./backend/README.md)**
 
 </div>
 
