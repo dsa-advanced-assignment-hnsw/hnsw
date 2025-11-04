@@ -103,16 +103,23 @@ class SearchEngine:
     def load_index(self):
         """Load the pre-built HNSW index and image URLs"""
         try:
-            print(f"📂 Loading image embeddings from HDF5 file: {H5_FILE_PATH}")
+            # Determine the .bin filename
+            index_filename = os.path.splitext(H5_FILE_PATH)[0] + ".bin"
 
-            # Check if file exists
+            # Check if .h5 file exists (required for metadata and URLs)
             if not os.path.exists(H5_FILE_PATH):
                 print(f"❌ Error: {H5_FILE_PATH} not found!")
                 print("   Please ensure the h5 file is in the backend directory")
                 return
 
-            # Determine the .bin filename
-            index_filename = os.path.splitext(H5_FILE_PATH)[0] + ".bin"
+            # Check if .bin file exists for faster index loading
+            bin_exists = os.path.exists(index_filename)
+            if bin_exists:
+                print(f"⚡ Found existing HNSW index: {index_filename}")
+            else:
+                print(f"📂 .bin file not found, will build index from embeddings")
+
+            print(f"📂 Loading image embeddings from HDF5 file: {H5_FILE_PATH}")
 
             # Load embeddings and URLs
             with h5py.File(H5_FILE_PATH, "r") as f:

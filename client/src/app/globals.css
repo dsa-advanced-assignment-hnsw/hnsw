@@ -1,3 +1,5 @@
+@import url(https://db.onlinewebfonts.com/c/43d244e16e0aef738eab893861d2f184?family=F37Ginger-Thin);
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -140,7 +142,7 @@
   left: 50%;
   width: 0;
   height: 0;
-  background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.2));
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -265,5 +267,23 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: "F37Ginger-Thin", system-ui, -apple-system, sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "F37Ginger-Thin", system-ui, -apple-system, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+}
+
+@layer utilities {
+  .font-wide {
+    font-family: "F37Ginger-Thin", system-ui, -apple-system, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .font-sans {
+    font-family: "F37Ginger-Thin", system-ui, -apple-system, sans-serif;
   }
 }
