@@ -93,3 +93,4 @@ htmlcov/
 
 #Cache
 */.cache
+*.h5
