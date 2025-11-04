@@ -32,6 +32,20 @@ The notebook is designed as a fault-tolerant, large-data processing pipeline tha
 
 ---
 
+## 🚀 Using the Generated Embeddings
+
+Once you've generated the paper embeddings using this notebook, you can use them with the Paper Search backend:
+
+1. **Place HDF5 file**: Copy the generated `Papers_Embedded_<start>-<end>.h5` file to the `backend/` directory
+2. **Update backend code**: Edit `backend/server_paper.py` line 16 to point to your HDF5 file:
+   ```python
+   def __init__(self, h5_file_path='Papers_Embedbed_0-100000.h5'):
+   ```
+3. **Start backend server**: Run `conda activate hnsw-backend-venv && python server_paper.py`
+4. **Connect frontend**: Set `NEXT_PUBLIC_API_URL` in `client/.env.local` and start the frontend
+
+For more details, see the main [README.md](../README.md) and [backend/README.md](../backend/README.md).
+
 ## ⚖️ Attribution and Licensing
 
 ### Project Code

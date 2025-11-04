@@ -27,7 +27,7 @@ CORS(app,
 # Configuration from environment variables
 IMAGE_CACHE_SIZE_MB = int(os.environ.get('IMAGE_CACHE_SIZE_MB', 100))
 IMAGE_FETCH_TIMEOUT = int(os.environ.get('IMAGE_FETCH_TIMEOUT', 10))
-H5_FILE_PATH = os.environ.get('H5_FILE_PATH', 'images_embeds_new.h5')
+H5_FILE_PATH = os.environ.get('H5_FILE_PATH', 'Images_Embedbed_0-100000.h5')
 MAX_HNSW_ELEMENTS = int(os.environ.get('MAX_HNSW_ELEMENTS', 2000000))  # 2M capacity for 1.5M images
 PREFETCH_IMAGES = os.environ.get('PREFETCH_IMAGES', 'false').lower() == 'true'  # Prefetch images in search results
 
@@ -111,6 +111,9 @@ class SearchEngine:
                 print("   Please ensure the h5 file is in the backend directory")
                 return
 
+            # Determine the .bin filename
+            index_filename = os.path.splitext(H5_FILE_PATH)[0] + ".bin"
+
             # Load embeddings and URLs
             with h5py.File(H5_FILE_PATH, "r") as f:
                 print(f"   Available datasets: {list(f.keys())}")
@@ -138,13 +141,28 @@ class SearchEngine:
                 decoded = url.decode('utf-8') if isinstance(url, bytes) else str(url)
                 print(f"      {i+1}. {decoded[:80]}...")
 
-            # Initialize HNSW index with increased capacity
-            print(f"🔧 Building HNSW index (capacity: {MAX_HNSW_ELEMENTS:,} images)...")
             dim = embs.shape[1]
-            self.index = hnswlib.Index(space='cosine', dim=dim)
-            self.index.init_index(max_elements=MAX_HNSW_ELEMENTS, ef_construction=400, M=200)
-            self.index.set_ef(200)
-            self.index.add_items(embs)
+
+            # Check if .bin file exists for faster loading
+            if os.path.exists(index_filename):
+                print(f"⚡ Found existing HNSW index: {index_filename}")
+                print(f"🔧 Loading HNSW index from .bin file (fast mode)...")
+                self.index = hnswlib.Index(space='cosine', dim=dim)
+                self.index.load_index(index_filename, max_elements=MAX_HNSW_ELEMENTS)
+                self.index.set_ef(200)
+                print(f"✅ HNSW index loaded successfully from .bin file!")
+            else:
+                # Build index from scratch if .bin doesn't exist
+                print(f"🔧 Building HNSW index from scratch (capacity: {MAX_HNSW_ELEMENTS:,} images)...")
+                print(f"   (This may take a while for the first run)")
+                self.index = hnswlib.Index(space='cosine', dim=dim)
+                self.index.init_index(max_elements=MAX_HNSW_ELEMENTS, ef_construction=400, M=200)
+                self.index.set_ef(200)
+                self.index.add_items(embs)
+                # Save index for future runs
+                self.index.save_index(index_filename)
+                print(f"💾 Saved HNSW index to: {index_filename}")
+                print(f"   (Next startup will be faster!)")
 
             print(f"✅ Search engine ready! Indexed {len(self.image_urls):,} images")
             print(f"📊 Index dimension: {dim}, Device: {self.device}")

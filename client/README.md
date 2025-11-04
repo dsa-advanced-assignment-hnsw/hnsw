@@ -1,6 +1,6 @@
-# HNSW Image Search - Frontend
+# HNSW Semantic Search - Frontend
 
-Modern Next.js frontend for the HNSW Image Search Engine.
+Modern Next.js frontend for the HNSW Semantic Search Engine supporting both image and paper search.
 
 ## Features
 
@@ -114,9 +114,21 @@ The `vercel.json` file is already configured:
 ### API Integration
 
 The frontend communicates with the backend through these endpoints:
-- `POST /search` - Search for images
-- `GET /image/:path` - Retrieve image
+
+**Image Search API (server.py / server_v2.py):**
+- `POST /search` - Search for images by text
+- `POST /search/image` - Search for images by image upload
+- `GET /image/:path` - Retrieve image (v1)
+- `GET /image-proxy?url=...` - Image proxy (v2)
+- `GET /cache/stats` - Cache statistics (v2)
 - `GET /health` - Health check
+
+**Paper Search API (server_paper.py):**
+- `POST /search` - Search for papers by text
+- `POST /search/document` - Search for papers by document upload
+- `GET /health` - Health check
+
+**Note:** Configure `NEXT_PUBLIC_API_URL` to point to the appropriate backend server.
 
 ## Project Structure
 
@@ -150,9 +162,14 @@ All components are in `src/app/page.tsx`. Feel free to extract them into separat
 
 ### Backend Connection Issues
 - Ensure backend is running on the specified URL
-- Check CORS is enabled on backend
-- Verify `NEXT_PUBLIC_API_URL` is set correctly
+- Verify which backend server you're connecting to:
+  - `server.py` for local image search
+  - `server_v2.py` for online image search (recommended)
+  - `server_paper.py` for paper search
+- Check CORS is enabled on backend (already configured)
+- Verify `NEXT_PUBLIC_API_URL` is set correctly in `.env.local`
 - Check browser console for errors
+- Test backend health: `GET http://your-backend-url/health`
 
 ### Vercel Deployment Issues
 - Environment variables must start with `NEXT_PUBLIC_` to be exposed to browser
