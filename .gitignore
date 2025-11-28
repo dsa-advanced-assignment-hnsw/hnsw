@@ -93,3 +93,6 @@ htmlcov/
 
 #Cache
 */.cache
+.cache
+
+temp.py
