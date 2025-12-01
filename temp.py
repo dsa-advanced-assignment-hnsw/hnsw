@@ -4,46 +4,70 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+from typing import Dict, Any, List
 
-# 1. Khai báo Tên tệp và Chiều dữ liệu (Kích thước Nhúng)
+# --- CẤU HÌNH ---
 file_configs = {
     # Nhóm 512 chiều
-    'Model_A_512': {'filename': '.cache/clip-vit-base-patch32/image_embeddings/clip-vit-base-patch32_Images_Embedded_1_to_100000.h5', 'dim': 512, 'group': '512D'},
-    'Model_B_512': {'filename': '.cache/clip-vit-base-patch16/image_embeddings/clip-vit-base-patch16_Images_Embedded_1_to_100000.h5', 'dim': 512, 'group': '512D'},
+    'clip-vit-base-patch32': {'filename': '.cache/clip-vit-base-patch32/image_embeddings/clip-vit-base-patch32_Images_Embedded_1_to_100000.h5', 'dim': 512, 'group': '512D'},
+    'clip-vit-base-patch16': {'filename': '.cache/clip-vit-base-patch16/image_embeddings/clip-vit-base-patch16_Images_Embedded_1_to_100000.h5', 'dim': 512, 'group': '512D'},
     # Nhóm 768 chiều
-    'Model_C_768': {'filename': '.cache/clip-vit-large-patch14/image_embeddings/clip-vit-large-patch14_Images_Embedded_1_to_100000.h5', 'dim': 768, 'group': '768D'},
-    'Model_D_768': {'filename': '.cache/clip-vit-large-patch14-336/image_embeddings/clip-vit-large-patch14-336_Images_Embedded_1_to_10000.h5', 'dim': 768, 'group': '768D'},
+    'clip-vit-large-patch14': {'filename': '.cache/clip-vit-large-patch14/image_embeddings/clip-vit-large-patch14_Images_Embedded_1_to_100000.h5', 'dim': 768, 'group': '768D'},
+    'clip-vit-large-patch14-336': {'filename': '.cache/clip-vit-large-patch14-336/image_embeddings/clip-vit-large-patch14-336_Images_Embedded_1_to_10000.h5', 'dim': 768, 'group': '768D'},
 }
 
-EMBEDDING_KEY = 'embeddings'
-SAMPLE_SIZE = 10000
+EMBEDDING_KEY = 'embeddings' # Tên trường chứa vector nhúng trong tệp H5
+SAMPLE_SIZE = 10000 
+NUM_CLUSTERS_KMEANS = 4 # Số cụm giả định để đánh giá phân biệt
 
-def load_and_sample_embeddings(filename, model_name, expected_dim, sample_size):
-    """Tải và lấy mẫu (sampling) các embeddings từ tệp H5."""
+def load_and_sample_embeddings(filename: str, model_name: str, expected_dim: int, sample_size: int) -> np.ndarray | None:
+    """Tải và lấy K phần tử đầu tiên (first K sampling) của các embeddings từ tệp H5."""
     try:
+        # --- LOGIC TẢI TỪ H5PY ---
         with h5py.File(filename, 'r') as f:
+            if EMBEDDING_KEY not in f:
+                 raise KeyError(f"Field '{EMBEDDING_KEY}' does not exist in the file.")
             embeddings = f[EMBEDDING_KEY][:]
+        # ------------------------------------
+        
+        current_count = embeddings.shape[0]
 
-            if embeddings.shape[1] != expected_dim:
-                print(f"Lỗi kích thước: {model_name} có chiều {embeddings.shape[1]}, không khớp {expected_dim}. Bỏ qua.")
-                return None
+        if embeddings.shape[1] != expected_dim:
+            print(f"Size error: {model_name} has dimension {embeddings.shape[1]}, which does not match {expected_dim}. Skipping.")
+            return None
 
-            if embeddings.shape[0] > sample_size:
-                print(f"[{model_name}]: Lấy mẫu ngẫu nhiên {sample_size} điểm.")
-                indices = np.random.choice(embeddings.shape[0], sample_size, replace=False)
-                embeddings = embeddings[indices]
+        # --- ĐIỀU CHỈNH: LẤY MẪU ĐẦU TIÊN (FIRST K) ---
+        if current_count >= sample_size:
+            print(f"[{model_name}]: Taking the first {sample_size} points.")
+            embeddings = embeddings[:sample_size]
+        elif current_count < sample_size:
+             # Nếu số lượng ít hơn SAMPLE_SIZE, lấy tất cả
+             print(f"[{model_name}]: Taking all {current_count} points (less than {sample_size}).")
+        # ---------------------------------------------
 
-            return embeddings
+        # Normalization (Crucial if your vectors are not already unit length, e.g., for Cosine Similarity)
+        norm_check = np.linalg.norm(embeddings, axis=1)
+        if not np.allclose(norm_check, 1.0, atol=1e-3):
+             embeddings = embeddings / norm_check[:, np.newaxis]
+
+        return embeddings
     except FileNotFoundError:
-        print(f"Lỗi: Không tìm thấy tệp {filename}")
+        print(f"ERROR: File {filename} not found. Please check the file name.")
         return None
-    except KeyError:
-        print(f"Lỗi: Không tìm thấy trường '{EMBEDDING_KEY}' trong tệp {filename}")
+    except KeyError as e:
+        print(f"ERROR: {e} in file {filename}.")
         return None
+    except Exception as e:
+         print(f"OTHER ERROR loading {filename}: {e}")
+         return None
 
-# 2. Tải Dữ liệu và Phân nhóm
-data_by_group = {'512D': [], '768D': []}
-stats = {}
+# --- LOAD AND GROUP DATA ---
+data_by_group: Dict[str, List[pd.DataFrame]] = {'512D': [], '768D': []}
+model_embeddings: Dict[str, np.ndarray] = {}
+stats: Dict[str, Dict[str, Any]] = {}
 
 for model_name, config in file_configs.items():
     embeddings = load_and_sample_embeddings(
@@ -52,8 +76,9 @@ for model_name, config in file_configs.items():
         config['dim'],
         SAMPLE_SIZE
     )
-
     if embeddings is not None:
+        model_embeddings[model_name] = embeddings
+        
         data_by_group[config['group']].append(
             pd.DataFrame({
                 'embedding': list(embeddings),
@@ -64,49 +89,7 @@ for model_name, config in file_configs.items():
         stats[model_name] = {
             'Count': embeddings.shape[0],
             'Embedding_Dim': embeddings.shape[1],
-            'Mean_Norm': np.mean(np.linalg.norm(embeddings, axis=1)),
+            'Mean_Norm': np.mean(np.linalg.norm(embeddings, axis=1)), # Average vector magnitude
             'Mean': np.mean(embeddings),
             'StdDev': np.std(embeddings),
         }
-
-print("\n-------------------------------------------")
-print("BẢNG SO SÁNH THỐNG KÊ CƠ BẢN CỦA EMBEDDINGS")
-print("-------------------------------------------")
-stats_df = pd.DataFrame(stats).T
-print(stats_df)
-print("-------------------------------------------\n")
-
-
-# 3. Giảm chiều và Trực quan hóa Bằng PCA (Theo Nhóm Chiều)
-for group_name, data_list in data_by_group.items():
-    if not data_list:
-        print(f"Không có dữ liệu hợp lệ cho nhóm {group_name}.")
-        continue
-
-    combined_df = pd.concat(data_list, ignore_index=True)
-    X = np.array(combined_df['embedding'].tolist())
-
-    # Chuẩn hóa dữ liệu
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-
-    # Thực hiện PCA
-    pca = PCA(n_components=2)
-    principal_components = pca.fit_transform(X_scaled)
-
-    pca_df = pd.DataFrame(data=principal_components, columns=['PC1', 'PC2'])
-    pca_df['model'] = combined_df['model']
-
-    # Trực quan hóa
-    plt.figure(figsize=(10, 8))
-    for name, group in pca_df.groupby('model'):
-        plt.scatter(group['PC1'], group['PC2'], label=name, alpha=0.6, s=15)
-
-    total_variance = pca.explained_variance_ratio_.sum() * 100
-    plt.title(f'So sánh không gian nhúng bằng PCA ({group_name}) - Tổng phương sai: {total_variance:.2f}%')
-    plt.xlabel(f'Thành phần chính 1 (Giải thích: {pca.explained_variance_ratio_[0]*100:.2f}%)')
-    plt.ylabel(f'Thành phần chính 2 (Giải thích: {pca.explained_variance_ratio_[1]*100:.2f}%)')
-    plt.legend()
-    plt.grid(True)
-    plt.savefig(f'pca_comparison_{group_name}.png')
-    print(f"Đã lưu biểu đồ so sánh PCA cho nhóm {group_name} tại 'pca_comparison_{group_name}.png'")
