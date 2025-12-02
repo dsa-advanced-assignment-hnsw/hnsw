@@ -215,8 +215,8 @@ function ModalImageDisplay({
 }
 
 export default function Home() {
-  // Main mode: 'image' or 'paper'
-  const [searchMode, setSearchMode] = useState<'image' | 'paper'>('image');
+  // Main mode: 'image' or 'paper' or 'medical'
+  const [searchMode, setSearchMode] = useState<'image' | 'paper' | 'medical'>('image');
 
   // Image search states
   const [query, setQuery] = useState('');
@@ -255,6 +255,25 @@ export default function Home() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [paperLastQuery, setPaperLastQuery] = useState<{ type: 'text' | 'file', value: string }>({ type: 'text', value: '' });
   const [paperCurrentPage, setPaperCurrentPage] = useState(1);
+
+  // Medical search states
+  const [medicalQuery, setMedicalQuery] = useState('');
+  const [medicalK, setMedicalK] = useState(20);
+  const [medicalKError, setMedicalKError] = useState('');
+  const [medicalResults, setMedicalResults] = useState<SearchResult[]>([]);
+  const [medicalLoading, setMedicalLoading] = useState(false);
+  const [medicalError, setMedicalError] = useState('');
+  const [medicalSearched, setMedicalSearched] = useState(false);
+  const [medicalSearchType, setMedicalSearchType] = useState<'text' | 'image'>('text');
+  const [uploadedMedicalImage, setUploadedMedicalImage] = useState<File | null>(null);
+  const [uploadedMedicalImagePreview, setUploadedMedicalImagePreview] = useState<string | null>(null);
+  const [medicalLastQuery, setMedicalLastQuery] = useState<{ type: 'text' | 'image', value: string }>({ type: 'text', value: '' });
+  const [medicalCurrentPage, setMedicalCurrentPage] = useState(1);
+  const [medicalImageErrors, setMedicalImageErrors] = useState<Set<number>>(new Set());
+  const [medicalImageDataCache, setMedicalImageDataCache] = useState<Map<string, string>>(new Map());
+  const [selectedMedicalImage, setSelectedMedicalImage] = useState<{ result: SearchResult; index: number } | null>(null);
+  const [medicalModalImageInfo, setMedicalModalImageInfo] = useState<{ width: number; height: number } | null>(null);
+  const [downloadingMedicalImage, setDownloadingMedicalImage] = useState(false);
 
   const IMAGES_PER_PAGE = 20;
 
@@ -717,12 +736,146 @@ export default function Home() {
     }
   };
 
-  const handleSearchModeChange = (newMode: 'image' | 'paper') => {
+  // Medical search handlers
+  const handleMedicalSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!medicalQuery.trim()) {
+      setMedicalError('Please enter a medical query');
+      return;
+    }
+    if (!validateMedicalK(medicalK)) return;
+
+    setMedicalLoading(true);
+    setMedicalError('');
+    setMedicalSearched(false);
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_MEDICAL_API_URL || 'http://localhost:5002';
+      const response = await fetch(`${apiUrl}/search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: medicalQuery, k: medicalK }),
+      });
+
+      if (!response.ok) throw new Error('Search failed');
+      
+      const data: SearchResponse = await response.json();
+      setMedicalResults(data.results);
+      setMedicalSearched(true);
+      setMedicalLastQuery({ type: 'text', value: medicalQuery });
+      setMedicalCurrentPage(1);
+    } catch (err) {
+      setMedicalError('Failed to search. Please ensure the medical server is running on port 5002.');
+    } finally {
+      setMedicalLoading(false);
+    }
+  };
+
+  const handleMedicalImageSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadedMedicalImage) {
+      setMedicalError('Please upload an X-ray image');
+      return;
+    }
+    if (!validateMedicalK(medicalK)) return;
+
+    setMedicalLoading(true);
+    setMedicalError('');
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_MEDICAL_API_URL || 'http://localhost:5002';
+      const formData = new FormData();
+      formData.append('image', uploadedMedicalImage);
+      formData.append('k', medicalK.toString());
+
+      const response = await fetch(`${apiUrl}/search/image`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Image search failed');
+      
+      const data: SearchResponse = await response.json();
+      setMedicalResults(data.results);
+      setMedicalSearched(true);
+      setMedicalLastQuery({ type: 'image', value: uploadedMedicalImage.name });
+      setMedicalCurrentPage(1);
+    } catch (err) {
+      setMedicalError('Failed to search by image. Please check the server.');
+    } finally {
+      setMedicalLoading(false);
+    }
+  };
+
+  const validateMedicalK = (value: number): boolean => {
+    if (isNaN(value) || value !== Math.floor(value)) {
+      setMedicalKError('Please enter a valid integer');
+      return false;
+    }
+    if (value <= 0) {
+      setMedicalKError('Number of results must be positive');
+      return false;
+    }
+    setMedicalKError('');
+    return true;
+  };
+
+  const loadMedicalImageData = async (path: string): Promise<string | null> => {
+    if (medicalImageDataCache.has(path)) {
+      return medicalImageDataCache.get(path)!;
+    }
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_MEDICAL_API_URL || 'http://localhost:5002';
+      
+      // Use query parameter to avoid issues with encoded slashes in path
+      const response = await fetch(`${apiUrl}/image?path=${encodeURIComponent(path)}`, {
+        headers: {
+          'ngrok-skip-browser-warning': 'true',
+        },
+      });
+      
+      if (!response.ok) {
+        console.error(`Failed to load medical image: ${path.substring(0, 80)}...`, response.status);
+        return null;
+      }
+      
+      const data: ImageData = await response.json();
+      setMedicalImageDataCache(prev => new Map(prev).set(path, data.image_data));
+      return data.image_data;
+    } catch (err) {
+      console.error(`Error loading medical image ${path.substring(0, 80)}...:`, err);
+      return null;
+    }
+  };
+
+  const downloadMedicalImage = async (path: string) => {
+    setDownloadingMedicalImage(true);
+    try {
+      const imageData = await loadMedicalImageData(path);
+      if (imageData) {
+        // Create a download link
+        const link = document.createElement('a');
+        link.href = imageData;
+        link.download = path.split('/').pop() || 'xray-image.jpg';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (err) {
+      console.error('Error downloading medical image:', err);
+    } finally {
+      setDownloadingMedicalImage(false);
+    }
+  };
+
+  const handleSearchModeChange = (newMode: 'image' | 'paper' | 'medical') => {
     if (newMode === searchMode) return;
     setSearchMode(newMode);
     // Reset errors when switching modes
     setError('');
     setPaperError('');
+    setMedicalError('');
   };
 
   return (
@@ -743,12 +896,14 @@ export default function Home() {
             <p className="text-gray-600 dark:text-gray-400 text-lg">
               {searchMode === 'image'
                 ? 'Search for images using natural language or upload an image to find similar ones'
-                : 'Search for academic papers using keywords or upload a document to find similar papers'}
+                : searchMode === 'paper'
+                ? 'Search for academic papers using keywords or upload a document to find similar papers'
+                : 'Search for bone fracture X-rays using medical terminology or upload an X-ray image'}
             </p>
           </div>
         </div>
 
-        {/* Main Mode Toggle - Image vs Paper */}
+        {/* Main Mode Toggle - Image vs Paper vs Medical */}
         <div className="flex justify-center mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-full p-1 shadow-lg border border-gray-200 dark:border-gray-700">
             <button
@@ -772,6 +927,17 @@ export default function Home() {
               }`}
             >
               📄 Paper Search Engine
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSearchModeChange('medical')}
+              className={`px-8 py-3 rounded-full font-semibold transition-all duration-300 ${
+                searchMode === 'medical'
+                  ? 'bg-blue-600 text-white shadow-md transform scale-105'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+              }`}
+            >
+              🦴 Fracture Search Engine
             </button>
           </div>
         </div>
@@ -1155,9 +1321,9 @@ export default function Home() {
               </ul>
             </div>
           </div>
-        )}
+            )}
           </>
-        ) : (
+        ) : searchMode === 'paper' ? (
           /* Paper Search UI */
           <>
             <form onSubmit={handlePaperSearch} className="mb-12">
@@ -1491,7 +1657,247 @@ export default function Home() {
               </div>
             )}
           </>
-        )}
+        ) : searchMode === 'medical' ? (
+          /* Medical Search UI */
+          <>
+            <form onSubmit={medicalSearchType === 'text' ? handleMedicalSearch : handleMedicalImageSearch} className="mb-12">
+              <div className="flex flex-col gap-6 max-w-4xl mx-auto">
+                {/* Medical Search Type Toggle */}
+                <div className="flex justify-center">
+                  <div className="bg-white dark:bg-gray-800 rounded-full p-1 shadow-lg border border-gray-200 dark:border-gray-700">
+                    <button
+                      type="button"
+                      onClick={() => setMedicalSearchType('text')}
+                      className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
+                        medicalSearchType === 'text'
+                          ? 'bg-blue-600 text-white shadow-md transform scale-105'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      🔍 Text Query
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMedicalSearchType('image')}
+                      className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
+                        medicalSearchType === 'image'
+                          ? 'bg-blue-600 text-white shadow-md transform scale-105'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      🩻 X-ray Image
+                    </button>
+                  </div>
+                </div>
+
+                {medicalSearchType === 'text' ? (
+                  <div className="flex flex-col gap-4">
+                    <input
+                      type="text"
+                      value={medicalQuery}
+                      onChange={(e) => setMedicalQuery(e.target.value)}
+                      placeholder="e.g., distal radius fracture, broken leg bone, femur fracture..."
+                      className="flex-1 px-6 py-4 text-lg rounded-xl border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                    />
+                    <div className="flex gap-4 items-center">
+                      <label className="text-gray-700 dark:text-gray-300 font-medium">Results (k):</label>
+                      <input
+                        type="number"
+                        value={medicalK}
+                        onChange={(e) => setMedicalK(parseInt(e.target.value) || 20)}
+                        min="1"
+                        max="100"
+                        className="w-24 px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      />
+                      <button
+                        type="submit"
+                        disabled={medicalLoading}
+                        className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {medicalLoading ? 'Searching...' : 'Search X-rays'}
+                      </button>
+                    </div>
+                    {medicalKError && <p className="text-red-500 text-sm">{medicalKError}</p>}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setUploadedMedicalImage(file);
+                            setUploadedMedicalImagePreview(URL.createObjectURL(file));
+                          }
+                        }}
+                        className="hidden"
+                        id="medical-image-upload"
+                      />
+                      <label htmlFor="medical-image-upload" className="cursor-pointer">
+                        {uploadedMedicalImagePreview ? (
+                          <div className="space-y-4">
+                            <img src={uploadedMedicalImagePreview} alt="Preview" className="max-h-64 mx-auto rounded-lg" />
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{uploadedMedicalImage?.name}</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <svg className="w-16 h-16 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <p className="text-gray-600 dark:text-gray-400">Click to upload X-ray image</p>
+                          </div>
+                        )}
+                      </label>
+                    </div>
+                    <div className="flex gap-4 items-center justify-center">
+                      <label className="text-gray-700 dark:text-gray-300 font-medium">Results (k):</label>
+                      <input
+                        type="number"
+                        value={medicalK}
+                        onChange={(e) => setMedicalK(parseInt(e.target.value) || 20)}
+                        min="1"
+                        max="100"
+                        className="w-24 px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      />
+                      <button
+                        type="submit"
+                        disabled={medicalLoading || !uploadedMedicalImage}
+                        className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {medicalLoading ? 'Searching...' : 'Find Similar X-rays'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </form>
+
+            {medicalError && (
+              <div className="mb-8 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-red-600 dark:text-red-400">{medicalError}</p>
+              </div>
+            )}
+
+            {medicalSearched && medicalResults.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
+                  Search Results ({medicalResults.length} X-rays found)
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  Query: <span className="font-semibold">{medicalLastQuery.value}</span>
+                  {medicalLastQuery.type === 'image' && ' (X-ray image search)'}
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {medicalResults
+                    .slice((medicalCurrentPage - 1) * IMAGES_PER_PAGE, medicalCurrentPage * IMAGES_PER_PAGE)
+                    .map((result, index) => (
+                      <div
+                        key={index}
+                        onClick={() => setSelectedMedicalImage({ result, index })}
+                        className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105"
+                      >
+                        <ImageDisplay
+                          path={result.path}
+                          index={index}
+                          loadImageData={loadMedicalImageData}
+                          imageErrors={medicalImageErrors}
+                          handleImageError={(idx) => setMedicalImageErrors(prev => new Set(prev).add(idx))}
+                        />
+                      </div>
+                    ))}
+                </div>
+
+                {medicalResults.length > IMAGES_PER_PAGE && (
+                  <div className="mt-8 flex justify-center gap-2">
+                    <button
+                      onClick={() => setMedicalCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={medicalCurrentPage === 1}
+                      className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg disabled:opacity-50"
+                    >
+                      Previous
+                    </button>
+                    <span className="px-4 py-2 text-gray-700 dark:text-gray-300">
+                      Page {medicalCurrentPage} of {Math.ceil(medicalResults.length / IMAGES_PER_PAGE)}
+                    </span>
+                    <button
+                      onClick={() => setMedicalCurrentPage(prev => Math.min(Math.ceil(medicalResults.length / IMAGES_PER_PAGE), prev + 1))}
+                      disabled={medicalCurrentPage >= Math.ceil(medicalResults.length / IMAGES_PER_PAGE)}
+                      className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg disabled:opacity-50"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Medical Image Modal */}
+            {selectedMedicalImage && (
+              <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
+                <div className="relative bg-white dark:bg-gray-800 rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                  {/* Close button */}
+                  <button
+                    onClick={() => setSelectedMedicalImage(null)}
+                    className="sticky top-4 left-full z-10 bg-white dark:bg-gray-700 rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors shadow-lg ml-auto mr-4 mb-2"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+
+                  <div className="px-4 pb-4">
+                    <ModalImageDisplay
+                      path={selectedMedicalImage.result.path}
+                      loadImageData={loadMedicalImageData}
+                      onImageLoad={setMedicalModalImageInfo}
+                    />
+                  </div>
+
+                  {/* Image info and controls */}
+                  <div className="p-6 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 truncate" title={selectedMedicalImage.result.path}>
+                          {selectedMedicalImage.result.path.split('/').pop() || 'X-ray Image'}
+                        </p>
+                        <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+                          {medicalModalImageInfo && (
+                            <span>Resolution: {medicalModalImageInfo.width} × {medicalModalImageInfo.height}</span>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => downloadMedicalImage(selectedMedicalImage.result.path)}
+                        disabled={downloadingMedicalImage}
+                        className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all ease-in-out duration-200 transform hover:scale-105 flex items-center gap-2 hover:cursor-pointer whitespace-nowrap"
+                      >
+                        {downloadingMedicalImage ? (
+                          <>
+                            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                            Downloading...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Download
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        ) : null}
       </div>
     </div>
   );
