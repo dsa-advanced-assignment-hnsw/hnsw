@@ -69,8 +69,8 @@
 ### 🏥 Medical Search (NEW)
 - 🦴 **Bone Fracture Search**
   Search X-ray images by medical terms
-- 🧠 **OpenCLIP Model**
-  ViT-B-16 pretrained on massive datasets
+- 🔬 **BiomedCLIP Model**
+  Specialized medical vision-language AI
 - 🏥 **Local Secure Storage**
   Privacy-first local image serving
 - 📊 **Clinical Accuracy**
@@ -110,7 +110,7 @@ graph TB
     subgraph ML["🤖 ML Models"]
         CLIP[CLIP ViT-B/32<br/>512-dim]
         ST[Sentence Transformers<br/>1024-dim]
-        OpenCLIP[OpenCLIP ViT-B/16<br/>512-dim]
+        BiomedCLIP[BiomedCLIP<br/>512-dim<br/>Medical Domain]
     end
 
     subgraph Storage["💾 Data Storage"]
@@ -132,11 +132,11 @@ graph TB
     ImgV1 --> CLIP
     ImgV2 --> CLIP
     Paper --> ST
-    Medical --> OpenCLIP
+    Medical --> BiomedCLIP
 
     CLIP --> HDF5_Img
     ST --> HDF5_Paper
-    OpenCLIP --> HDF5_Medical
+    BiomedCLIP --> HDF5_Medical
 
     HDF5_Img --> HNSW_Img
     HDF5_Paper --> HNSW_Paper
@@ -227,7 +227,7 @@ npm run dev
   <img src="https://img.shields.io/badge/Flask-3.0-000000?style=for-the-badge&logo=flask&logoColor=white" />
   <img src="https://img.shields.io/badge/PyTorch-2.0+-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white" />
   <img src="https://img.shields.io/badge/OpenAI-CLIP-412991?style=for-the-badge&logo=openai&logoColor=white" />
-  <img src="https://img.shields.io/badge/OpenCLIP-ViT--B16-000000?style=for-the-badge&logo=openai&logoColor=white" />
+  <img src="https://img.shields.io/badge/BiomedCLIP-Medical_AI-0078D4?style=for-the-badge&logo=microsoft&logoColor=white" />
   <img src="https://img.shields.io/badge/hnswlib-Vector_Search-FF6B6B?style=for-the-badge" />
   <img src="https://img.shields.io/badge/HDF5-Data_Storage-013243?style=for-the-badge" />
 </p>
@@ -247,8 +247,8 @@ npm run dev
 <tr>
 <td align="center" width="33%">
   <img src="https://img.icons8.com/color/96/000000/artificial-intelligence.png" width="64" /><br />
-  <b>CLIP / OpenCLIP</b><br />
-  <sub>Vision-Language Models</sub><br />
+  <b>BiomedCLIP</b><br />
+  <sub>Medical Vision-Language</sub><br />
   <code>512-dim embeddings</code>
 </td>
 <td align="center" width="33%">
