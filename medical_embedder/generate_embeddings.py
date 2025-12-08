@@ -101,7 +101,7 @@ def download_fracatlas(dataset_path="FracAtlas"):
     return image_paths
 
 
-def upload_to_cloudinary(image_paths, folder="medical/fractures", rate_limit=0.15):
+def upload_to_cloudinary(image_paths, folder="medical/fractures_2", rate_limit=0.15):
     """Upload images to Cloudinary CDN"""
     print(f"\n📤 Uploading {len(image_paths)} images to Cloudinary...")
     print(f"   This will take approximately {len(image_paths) * rate_limit / 60:.1f} minutes")
