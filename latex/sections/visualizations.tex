@@ -1,0 +1,131 @@
+\chapter{Trực quan hóa}
+
+\section{Biểu đồ hiệu suất}
+
+\subsection{So sánh độ trễ}
+\Cref{fig:latency_comparison} so sánh độ trễ truy vấn giữa HNSW và Brute-force cho các giá trị K khác nhau. Biểu đồ cho thấy HNSW duy trì độ trễ thấp và ổn định (~50-75µs) trong khi Brute-force có độ trễ cao và không đổi (~1,350-1,450µs) bất kể giá trị K.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/latency_comparison.png}
+    \caption{So sánh độ trễ truy vấn giữa HNSW và Brute-force}
+    \label{fig:latency_comparison}
+\end{figure}
+
+\subsection{Độ chính xác Recall@K}
+\Cref{fig:recall_curve} trình bày đường cong Recall@K cho các giá trị K từ 1 đến 100. Đường cong cho thấy độ chính xác giảm dần khi K tăng, nhưng vẫn duy trì ở mức cao (>0.72) ngay cả với K=100.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/recall_curve.png}
+    \caption{Đường cong Recall@K của HNSW}
+    \label{fig:recall_curve}
+\end{figure}
+
+\subsection{Ảnh hưởng của tham số M}
+\Cref{fig:m_parameter} minh họa mối quan hệ giữa tham số M và hiệu suất (độ chính xác và thời gian truy vấn). Biểu đồ cho thấy có điểm tối ưu ở M=200, nơi đạt được sự cân bằng tốt giữa độ chính xác và tốc độ.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/m_parameter.png}
+    \caption{Ảnh hưởng của tham số M đến hiệu suất}
+    \label{fig:m_parameter}
+\end{figure}
+
+\subsection{Heatmap điều chỉnh tham số}
+\Cref{fig:parameter_heatmap} trình bày heatmap so sánh hiệu suất với các cấu hình tham số khác nhau (M vs efConstruction). Màu sắc đại diện cho giá trị Recall@1, với màu đỏ đậm hơn biểu thị độ chính xác cao hơn.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/parameter_heatmap.png}
+    \caption{Heatmap điều chỉnh tham số (M vs efConstruction)}
+    \label{fig:parameter_heatmap}
+\end{figure}
+
+\section{Cấu trúc đồ thị}
+
+\subsection{Visualization phân tầng}
+\Cref{fig:hnsw_layers} minh họa cấu trúc phân tầng của đồ thị HNSW. Hình vẽ cho thấy:
+\begin{itemize}
+    \item Tầng 0 (dưới cùng): Mật độ nút cao nhất, tất cả các vector đều có mặt
+    \item Các tầng cao hơn: Mật độ giảm dần, chỉ một phần nhỏ vector xuất hiện
+    \item Tầng cao nhất: Rất thưa, chỉ có một vài nút làm điểm vào
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/hnsw_layers.png}
+    \caption{Cấu trúc phân tầng của đồ thị HNSW}
+    \label{fig:hnsw_layers}
+\end{figure}
+
+\subsection{Topology đồ thị}
+\Cref{fig:graph_topology} trình bày topology của đồ thị HNSW ở một tầng cụ thể, cho thấy các kết nối giữa các nút. Mỗi nút được kết nối với M nút gần nhất, tạo thành một mạng lưới nhỏ thế giới (small world network).
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/graph_topology.png}
+    \caption{Topology đồ thị HNSW ở một tầng}
+    \label{fig:graph_topology}
+\end{figure}
+
+\section{Quá trình tìm kiếm}
+
+\subsection{Đường đi tìm kiếm}
+\Cref{fig:search_path} minh họa đường đi của thuật toán greedy search từ điểm vào (màu đỏ) đến vector mục tiêu (màu xanh lá). Đường đi cho thấy:
+\begin{itemize}
+    \item Bắt đầu từ tầng cao nhất
+    \item Di chuyển xuống các tầng thấp hơn
+    \item Tại mỗi tầng, chọn nút gần nhất với truy vấn
+    \item Dừng lại khi không tìm thấy nút gần hơn
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/search_path.png}
+    \caption{Đường đi tìm kiếm trong đồ thị HNSW}
+    \label{fig:search_path}
+\end{figure}
+
+\subsection{Visualization 3D}
+\Cref{fig:hnsw_3d} trình bày visualization 3D của đồ thị HNSW, cho phép quan sát cấu trúc phân tầng và các kết nối từ nhiều góc độ khác nhau. Visualization này giúp hiểu rõ hơn về cách đồ thị được tổ chức trong không gian nhiều chiều.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/hnsw_3d.png}
+    \caption{Visualization 3D của đồ thị HNSW}
+    \label{fig:hnsw_3d}
+\end{figure}
+
+\section{So sánh đa phương thức}
+
+\subsection{Hiệu suất theo loại dữ liệu}
+\Cref{fig:multimodal_comparison} so sánh hiệu suất của HNSW trên ba loại dữ liệu khác nhau:
+\begin{itemize}
+    \item \textbf{Hình ảnh} (512 chiều): Độ trễ ~45µs, Recall@10 ≈ 0.85
+    \item \textbf{Tài liệu} (1024 chiều): Độ trễ ~60µs, Recall@10 ≈ 0.82
+    \item \textbf{Y tế} (512 chiều): Độ trễ ~40µs, Recall@10 ≈ 0.88
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/multimodal_comparison.png}
+    \caption{So sánh hiệu suất trên các loại dữ liệu khác nhau}
+    \label{fig:multimodal_comparison}
+\end{figure}
+
+\subsection{Ảnh hưởng của số chiều}
+\Cref{fig:dimension_impact} minh họa ảnh hưởng của số chiều embedding đến hiệu suất. Kết quả cho thấy:
+\begin{itemize}
+    \item Số chiều cao hơn → thời gian truy vấn tăng nhẹ
+    \item Số chiều không ảnh hưởng đáng kể đến độ chính xác
+    \item HNSW hoạt động hiệu quả với cả embedding 512 và 1024 chiều
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/dimension_impact.png}
+    \caption{Ảnh hưởng của số chiều embedding đến hiệu suất}
+    \label{fig:dimension_impact}
+\end{figure}
+

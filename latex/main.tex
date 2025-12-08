@@ -1,0 +1,25 @@
+\documentclass{report}
+\usepackage{preamble/preamble}
+% \renewcommand{\algorithmname}{Figure}
+% For better formatting of function names
+\newcommand{\proc}[1]{\textnormal{\textsc{#1}}}
+\begin{document}
+\input{sections/cover}
+\tableofcontents
+\thispagestyle{empty}
+\listoffigures
+\listoftables
+\input{sections/abstract}
+\input{sections/preface}
+\input{sections/goal}
+\input{sections/theories}
+\input{sections/implementation}
+\input{sections/performance}
+\input{sections/visualizations}
+\input{sections/methodology}
+\input{sections/results}
+\input{sections/conclusion}
+
+\bibliographystyle{IEEEtran.bst}
+\bibliography{references/main}
+\end{document}

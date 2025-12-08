@@ -1,0 +1,38 @@
+\ProvidesPackage{mystyle}
+
+% pdf things
+\usepackage{booktabs, comment} 
+\usepackage[absolute, overlay]{textpos} 
+\usepackage{pgfpages}
+\usepackage[font=footnotesize]{caption}
+\usepackage{tikz}
+\usepackage[makeroom]{cancel}
+\usepackage{textpos}
+\usepackage{csquotes}
+\usepackage{lmodern}  % Font Latin Modern
+\usefonttheme{serif}  % Font có chân (serif)
+
+% Math packages
+\usepackage{amsmath, amsfonts, amssymb, amsthm, amsxtra, amscd}
+\usepackage{bm}
+
+
+% Theme things (Stockholm Universit)
+\definecolor{Blu}{RGB}{3, 43, 145}
+\definecolor{LightBlu}{RGB}{20, 136, 219}
+\definecolor{Viola}{RGB}{188,30,188}
+\setbeamercolor{title in head/foot}{bg=LightBlu, fg=white}
+\setbeamercolor{author in head/foot}{bg=Blu}
+\usetheme{Madrid}
+\useoutertheme{infolines}
+\usecolortheme[named=Blu]{structure}
+\usepackage{hyperref}	% Hyperlinks
+\hypersetup{colorlinks=true,linkcolor=Blu,citecolor=Viola,urlcolor=Blu,}
+\addtobeamertemplate{footline}{\hypersetup{linkcolor=white}}
+
+
+
+% Own commands
+\newcommand{\xdot}{\dot{x}} 
+
+

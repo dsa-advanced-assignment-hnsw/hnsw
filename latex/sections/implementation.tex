@@ -1,0 +1,154 @@
+\chapter{Thiết kế và triển khai hệ thống}
+
+\section{Kiến trúc hệ thống}
+
+Hệ thống tìm kiếm đa phương thức được thiết kế theo kiến trúc client-server với ba dịch vụ backend độc lập và một frontend thống nhất. \Cref{fig:system_architecture} mô tả kiến trúc tổng thể của hệ thống.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/system_architecture.png}
+    \caption{Kiến trúc hệ thống tìm kiếm đa phương thức sử dụng HNSW}
+    \label{fig:system_architecture}
+\end{figure}
+
+\subsection{Thành phần Frontend}
+Frontend được xây dựng bằng Next.js 15 với TypeScript, cung cấp giao diện web thống nhất cho cả ba loại tìm kiếm:
+\begin{itemize}
+    \item \textbf{Tìm kiếm hình ảnh}: Hỗ trợ tìm kiếm bằng văn bản hoặc tải lên hình ảnh
+    \item \textbf{Tìm kiếm tài liệu}: Tìm kiếm trong kho tài liệu khoa học arXiv
+    \item \textbf{Tìm kiếm y tế}: Tìm kiếm hình ảnh X-quang gãy xương
+\end{itemize}
+
+Frontend giao tiếp với các backend service thông qua REST API, với các endpoint:
+\begin{itemize}
+    \item Image Search API: \texttt{http://localhost:5000}
+    \item Paper Search API: \texttt{http://localhost:5001}
+    \item Medical Search API: \texttt{http://localhost:5002}
+\end{itemize}
+
+\subsection{Thành phần Backend}
+Backend được triển khai bằng Flask (Python) với ba dịch vụ độc lập:
+
+\subsubsection{Image Search Service (Port 5000)}
+\begin{itemize}
+    \item \textbf{Mô hình}: OpenAI CLIP (ViT-B/32)
+    \item \textbf{Embedding dimension}: 512
+    \item \textbf{Dataset}: Open Images V7, 100,000+ hình ảnh
+    \item \textbf{Storage}: HDF5 file (\texttt{Images\_Embedbed\_0-100000.h5})
+    \item \textbf{Features}: Hỗ trợ hình ảnh từ nhiều nguồn (Flickr, Pinterest, Google Images)
+\end{itemize}
+
+\subsubsection{Paper Search Service (Port 5001)}
+\begin{itemize}
+    \item \textbf{Mô hình}: Sentence Transformers (all-roberta-large-v1)
+    \item \textbf{Embedding dimension}: 1024
+    \item \textbf{Dataset}: arXiv papers, 100,000+ tài liệu
+    \item \textbf{Storage}: HDF5 file (\texttt{Papers\_Embedbed\_0-100000.h5})
+    \item \textbf{Features}: Tìm kiếm bằng văn bản hoặc tải lên file PDF/TXT
+\end{itemize}
+
+\subsubsection{Medical Search Service (Port 5002)}
+\begin{itemize}
+    \item \textbf{Mô hình}: BiomedCLIP (microsoft/BiomedCLIP-PubMedBERT\_256-vit\_base\_patch16\_224)
+    \item \textbf{Embedding dimension}: 512
+    \item \textbf{Dataset}: FracAtlas bone fractures, 3,400+ hình ảnh X-quang
+    \item \textbf{Storage}: HDF5 file (\texttt{Medical\_Fractures\_Embedded.h5})
+    \item \textbf{Features}: Tìm kiếm bằng thuật ngữ y tế hoặc tải lên hình ảnh X-quang
+\end{itemize}
+
+\section{Mô tả dữ liệu}
+
+\subsection{Dataset hình ảnh}
+Dataset hình ảnh được lấy từ Open Images V7, một tập dữ liệu công khai lớn với hơn 9 triệu hình ảnh. Hệ thống sử dụng 100,000 hình ảnh được chọn ngẫu nhiên từ tập dữ liệu này. Mỗi hình ảnh được mã hóa thành vector 512 chiều sử dụng mô hình CLIP (ViT-B/32), được chuẩn hóa L2 để tối ưu cho cosine similarity.
+
+\subsection{Dataset tài liệu}
+Dataset tài liệu bao gồm 100,000 bài báo khoa học từ arXiv, một kho lưu trữ công khai các bài báo khoa học. Mỗi bài báo được biểu diễn bằng abstract (tóm tắt) của nó, được mã hóa thành vector 1024 chiều sử dụng mô hình Sentence Transformers (RoBERTa-large). Các vector được chuẩn hóa L2 và lưu trữ cùng với URL PDF của bài báo.
+
+\subsection{Dataset hình ảnh y tế}
+Dataset hình ảnh y tế bao gồm 3,400 hình ảnh X-quang gãy xương từ FracAtlas dataset. Mỗi hình ảnh được mã hóa thành vector 512 chiều sử dụng mô hình BiomedCLIP, được huấn luyện trên 15 triệu cặp hình ảnh-văn bản y sinh từ PubMed. Mô hình này được tối ưu hóa đặc biệt cho các hình ảnh y tế và hiểu được các thuật ngữ y tế phức tạp.
+
+\section{Chi tiết triển khai}
+
+\subsection{Tích hợp hnswlib}
+Hệ thống sử dụng thư viện hnswlib, một thư viện C++ được tối ưu hóa cao với Python bindings. Cấu hình HNSW được tối ưu cho từng loại dữ liệu:
+
+\begin{itemize}
+    \item \textbf{M (số kết nối tối đa)}: 200 - Đảm bảo độ chính xác cao
+    \item \textbf{efConstruction}: 400 - Số lượng láng giềng xem xét khi xây dựng đồ thị
+    \item \textbf{efSearch}: 200 - Số lượng láng giềng xem xét khi tìm kiếm
+    \item \textbf{Space}: cosine - Sử dụng cosine similarity cho tất cả các loại embedding
+\end{itemize}
+
+\subsection{Cấu trúc lưu trữ HDF5}
+Các vector embedding được lưu trữ trong định dạng HDF5 với cấu trúc sau:
+
+\begin{verbatim}
+{
+    'embeddings': (N, d) float32,  # N vectors, d dimensions
+    'urls' hoặc 'image_path': (N,) string,  # URLs hoặc đường dẫn
+    'attrs': {
+        'model': 'model_name',
+        'embedding_dim': d,
+        'total_items': N,
+        'created_date': 'timestamp'
+    }
+}
+\end{verbatim}
+
+HDF5 được chọn vì:
+\begin{itemize}
+    \item Hỗ trợ nén dữ liệu hiệu quả (gzip level 9)
+    \item Truy cập nhanh với khả năng đọc một phần dữ liệu
+    \item Tương thích tốt với Python (h5py)
+    \item Kích thước file nhỏ: ~5MB cho 100K hình ảnh, ~4GB cho 1M tài liệu
+\end{itemize}
+
+\subsection{API Endpoints}
+Mỗi backend service cung cấp các endpoint REST API:
+
+\subsubsection{Image Search API}
+\begin{itemize}
+    \item \texttt{POST /search}: Tìm kiếm bằng văn bản
+    \item \texttt{POST /search/image}: Tìm kiếm bằng hình ảnh
+    \item \texttt{GET /image-proxy?url=...}: Proxy hình ảnh từ URL
+    \item \texttt{GET /health}: Kiểm tra trạng thái service
+\end{itemize}
+
+\subsubsection{Paper Search API}
+\begin{itemize}
+    \item \texttt{POST /search}: Tìm kiếm bằng văn bản
+    \item \texttt{POST /search/file}: Tìm kiếm bằng file PDF/TXT
+    \item \texttt{GET /health}: Kiểm tra trạng thái service
+\end{itemize}
+
+\subsubsection{Medical Search API}
+\begin{itemize}
+    \item \texttt{POST /search}: Tìm kiếm bằng thuật ngữ y tế
+    \item \texttt{POST /search/image}: Tìm kiếm bằng hình ảnh X-quang
+    \item \texttt{GET /image?path=...}: Lấy hình ảnh từ đường dẫn cục bộ
+    \item \texttt{GET /health}: Kiểm tra trạng thái service
+\end{itemize}
+
+\subsection{Triển khai Brute-force Baseline}
+Để so sánh hiệu suất, hệ thống cũng triển khai phương pháp brute-force như baseline. Brute-force thực hiện tính toán khoảng cách cosine giữa vector truy vấn và tất cả các vector trong dataset, sau đó sắp xếp và chọn $k$ vector gần nhất. Độ phức tạp thời gian là $O(N \times d)$ với $N$ là số lượng vector và $d$ là số chiều.
+
+\section{Quy trình xử lý}
+
+\subsection{Quy trình tìm kiếm}
+\begin{enumerate}
+    \item \textbf{Nhận truy vấn}: Frontend gửi yêu cầu tìm kiếm (văn bản hoặc hình ảnh) đến backend
+    \item \textbf{Mã hóa truy vấn}: Backend sử dụng mô hình embedding tương ứng để mã hóa truy vấn thành vector
+    \item \textbf{Tìm kiếm HNSW}: Vector truy vấn được sử dụng để tìm $k$ láng giềng gần nhất trong đồ thị HNSW
+    \item \textbf{Trả về kết quả}: Backend trả về danh sách $k$ kết quả cùng với điểm tương tự (similarity score)
+    \item \textbf{Hiển thị}: Frontend hiển thị kết quả với hình ảnh, metadata và điểm tương tự
+\end{enumerate}
+
+\subsection{Quy trình xây dựng chỉ mục}
+\begin{enumerate}
+    \item \textbf{Thu thập dữ liệu}: Tải và tiền xử lý dữ liệu (hình ảnh, văn bản)
+    \item \textbf{Mã hóa}: Sử dụng mô hình embedding để mã hóa tất cả các mục thành vector
+    \item \textbf{Lưu trữ HDF5}: Lưu các vector và metadata vào file HDF5
+    \item \textbf{Xây dựng HNSW}: Sử dụng hnswlib để xây dựng đồ thị HNSW từ các vector
+    \item \textbf{Lưu chỉ mục}: Lưu đồ thị HNSW vào file .bin để tải nhanh khi khởi động
+\end{enumerate}
+

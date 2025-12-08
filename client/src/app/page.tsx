@@ -628,6 +628,14 @@ export default function Home() {
     }
   };
 
+  // Fix URLs ending with .pd to .pdf
+  const fixPaperUrl = (url: string): string => {
+    if (url.endsWith('.pd')) {
+      return url.slice(0, -3) + '.pdf';
+    }
+    return url;
+  };
+
   const performPaperTextSearch = async () => {
     setPaperLoading(true);
     setPaperError('');
@@ -650,7 +658,12 @@ export default function Home() {
       }
 
       const data: PaperSearchResponse = await response.json();
-      setPaperResults(data.results);
+      // Fix URLs ending with .pd
+      const fixedResults = data.results.map(result => ({
+        ...result,
+        url: fixPaperUrl(result.url)
+      }));
+      setPaperResults(fixedResults);
       setPaperLastQuery({ type: 'text', value: paperQuery });
     } catch (err) {
       setPaperError('Failed to search papers. Please make sure the backend server is running.');
@@ -687,7 +700,12 @@ export default function Home() {
       }
 
       const data: PaperSearchResponse = await response.json();
-      setPaperResults(data.results);
+      // Fix URLs ending with .pd
+      const fixedResults = data.results.map(result => ({
+        ...result,
+        url: fixPaperUrl(result.url)
+      }));
+      setPaperResults(fixedResults);
       setPaperLastQuery({ type: 'file', value: uploadedFile.name });
     } catch (err) {
       setPaperError('Failed to search with file. Please make sure the backend server is running.');
@@ -806,7 +824,7 @@ export default function Home() {
       setMedicalLoading(false);
     }
   };
-
+  
   const validateMedicalK = (value: number): boolean => {
     if (isNaN(value) || value !== Math.floor(value)) {
       setMedicalKError('Please enter a valid integer');
@@ -826,23 +844,57 @@ export default function Home() {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_MEDICAL_API_URL || 'http://localhost:5002';
+      // Check if path is already a full URL (Cloudinary URL)
+      const isUrl = path.startsWith('http://') || path.startsWith('https://');
       
-      // Use query parameter to avoid issues with encoded slashes in path
-      const response = await fetch(`${apiUrl}/image?path=${encodeURIComponent(path)}`, {
-        headers: {
-          'ngrok-skip-browser-warning': 'true',
-        },
-      });
-      
-      if (!response.ok) {
-        console.error(`Failed to load medical image: ${path.substring(0, 80)}...`, response.status);
-        return null;
+      if (isUrl) {
+        // For Cloudinary URLs, fetch the image and convert to data URI
+        const response = await fetch(path, {
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
+        
+        if (!response.ok) {
+          console.error(`Failed to load medical image from URL: ${path.substring(0, 80)}...`, response.status);
+          return null;
+        }
+        
+        const blob = await response.blob();
+        const reader = new FileReader();
+        
+        return new Promise((resolve) => {
+          reader.onloadend = () => {
+            const dataUri = reader.result as string;
+            setMedicalImageDataCache(prev => new Map(prev).set(path, dataUri));
+            resolve(dataUri);
+          };
+          reader.onerror = () => {
+            console.error(`Error converting medical image to data URI: ${path.substring(0, 80)}...`);
+            resolve(null);
+          };
+          reader.readAsDataURL(blob);
+        });
+      } else {
+        // For relative paths, use the API endpoint
+        const apiUrl = process.env.NEXT_PUBLIC_MEDICAL_API_URL || 'http://localhost:5002';
+        
+        // Use query parameter to avoid issues with encoded slashes in path
+        const response = await fetch(`${apiUrl}/image?path=${encodeURIComponent(path)}`, {
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
+        
+        if (!response.ok) {
+          console.error(`Failed to load medical image: ${path.substring(0, 80)}...`, response.status);
+          return null;
+        }
+        
+        const data: ImageData = await response.json();
+        setMedicalImageDataCache(prev => new Map(prev).set(path, data.image_data));
+        return data.image_data;
       }
-      
-      const data: ImageData = await response.json();
-      setMedicalImageDataCache(prev => new Map(prev).set(path, data.image_data));
-      return data.image_data;
     } catch (err) {
       console.error(`Error loading medical image ${path.substring(0, 80)}...:`, err);
       return null;
@@ -859,7 +911,7 @@ export default function Home() {
         link.href = imageData;
         link.download = path.split('/').pop() || 'xray-image.jpg';
         document.body.appendChild(link);
-        link.click();
+        link.click(); 
         document.body.removeChild(link);
       }
     } catch (err) {

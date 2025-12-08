@@ -1,0 +1,25 @@
+\babel@toc {vietnamese}{}\relax 
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Biểu diễn đồ thị của cấu trúc NSW \cite {malkov2014approximate}}}{9}{figure.caption.5}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Một PSL với 8 phần tử, mục tiêu cần tìm là phần tử thứ 6 \cite {papadakis1993skip}}}{11}{figure.caption.6}%
+\contentsline {figure}{\numberline {2.3}{\ignorespaces Minh họa cho ý tưởng HNSW \cite {malkov2018efficient}}}{11}{figure.caption.7}%
+\contentsline {figure}{\numberline {2.4}{\ignorespaces Minh họa cho các buckets trong thuật toán LSH \cite {chakraborty2020conlsh}}}{16}{figure.caption.8}%
+\contentsline {figure}{\numberline {2.5}{\ignorespaces Minh họa khởi tạo một vp-tree \cite {vptree}}}{17}{figure.caption.9}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Kiến trúc hệ thống tìm kiếm đa phương thức sử dụng HNSW}}{19}{figure.caption.11}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {5.1}{\ignorespaces So sánh độ trễ truy vấn giữa HNSW và Brute-force}}{30}{figure.caption.14}%
+\contentsline {figure}{\numberline {5.2}{\ignorespaces Đường cong Recall@K của HNSW}}{31}{figure.caption.15}%
+\contentsline {figure}{\numberline {5.3}{\ignorespaces Ảnh hưởng của tham số M đến hiệu suất}}{32}{figure.caption.16}%
+\contentsline {figure}{\numberline {5.4}{\ignorespaces Heatmap điều chỉnh tham số (M vs efConstruction)}}{33}{figure.caption.17}%
+\contentsline {figure}{\numberline {5.5}{\ignorespaces Cấu trúc phân tầng của đồ thị HNSW}}{34}{figure.caption.18}%
+\contentsline {figure}{\numberline {5.6}{\ignorespaces Topology đồ thị HNSW ở một tầng}}{35}{figure.caption.19}%
+\contentsline {figure}{\numberline {5.7}{\ignorespaces Đường đi tìm kiếm trong đồ thị HNSW}}{36}{figure.caption.20}%
+\contentsline {figure}{\numberline {5.8}{\ignorespaces Visualization 3D của đồ thị HNSW}}{37}{figure.caption.21}%
+\contentsline {figure}{\numberline {5.9}{\ignorespaces So sánh hiệu suất trên các loại dữ liệu khác nhau}}{38}{figure.caption.22}%
+\contentsline {figure}{\numberline {5.10}{\ignorespaces Ảnh hưởng của số chiều embedding đến hiệu suất}}{39}{figure.caption.23}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsfinish 

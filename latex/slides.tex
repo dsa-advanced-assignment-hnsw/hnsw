@@ -1,0 +1,91 @@
+\documentclass{beamer}
+\usepackage[utf8]{vietnam}
+\usepackage{mystyle} % See mystyle.sty for packages and own commands
+\usepackage{fancyhdr}
+\usepackage{minted}
+\usepackage[backend=biber,style=ieee]{biblatex}
+\addbibresource{main.bib}
+\newcommand{\insertimage}[3]{
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=#2\textwidth]{#1}
+        \caption{\centering #3}
+        \label{fig:#1}
+    \end{figure}
+}
+
+\newcommand{\insertimagenocap}[2]{
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=#2\textwidth]{#1}
+        \label{fig:#1}
+    \end{figure}
+}
+
+
+
+%------------------------------------------------------------
+%Title page
+\title[Báo cáo bài tập lớn môn Vật lý 1]{Báo cáo bài tập lớn học phần mở rộng \\ Cấu trúc Dữ liệu và Giải thuật}
+\subtitle{Tìm kiếm gần đúng bằng đồ thị HNSW}
+\titlegraphic{\includegraphics[height=0.8cm]{images/logobk.png}}
+\author{Nhóm 8 - Lớp TN01}
+\institute[]{ĐẠI HỌC QUỐC GIA TP. HCM\\ TRƯỜNG ĐẠI HỌC BÁCH KHOA \\ KHOA KHOA HỌC ỨNG DỤNG}
+\date{Tháng \the\month, năm \the\year}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+\logo{\includegraphics[height=1cm]{logobk.png}}
+\begin{frame}{Mục lục}
+    \tableofcontents
+\end{frame}
+\section{Giới thiệu đề tài}
+\begin{frame}{Danh sách sinh viên \&    Giảng viên hướng dẫn}
+    \begin{table}[H]
+    \centering
+    \begin{tabular}{|l|p{5cm}|l|}
+    \hline
+    \textbf{Số thứ tự}&\textbf{Họ và tên} & \textbf{Mã số sinh viên}\\\hline
+    1&Phạm Quốc Huy&2411261\\\hline
+    2&Nguyễn Đình Huy&2411205\\\hline
+    3&Trần Quang Huy&2411278\\\hline
+    \end{tabular}
+    \caption{Danh sách sinh viên thực hiện bài tập lớn}
+    \end{table}
+    \centering
+    \textbf{Giảng viên hướng dẫn:} TS. Lê Thành Sách
+\end{frame}
+
+
+
+
+% \begin{frame}{Chủ đề và mục tiêu}
+
+% \end{frame}
+% \begin{frame}{Danh mục công việc}
+
+% \end{frame}
+% \begin{frame}{Phương pháp}
+
+
+% \end{frame}
+
+\section{Danh mục công việc}
+\begin{frame}{Danh mục công việc}
+    \begin{itemize}
+        \item Phát triển Website (frontend và backend).
+        \item 
+    \end{itemize}
+\end{frame}
+
+\section{Phương pháp}
+
+\section{Kết quả}
+
+\section{Tổng kết}
+
+% \end{frame}
+\end{document}
