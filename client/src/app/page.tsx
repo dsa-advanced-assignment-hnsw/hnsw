@@ -102,7 +102,7 @@ export default function LandingPage() {
                                 START SEARCHING <ArrowRight className="w-6 h-6" />
                             </Link>
                             <Link
-                                href="https://github.com/dsa-advanced-assignment-hnsw/hnsw-search-engine"
+                                href="https://github.com/dsa-advanced-assignment-hnsw/hnsw"
                                 target="_blank"
                                 className="w-full sm:w-auto px-8 py-4 bg-white text-black font-black text-xl border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-50 hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center justify-center gap-3"
                             >
@@ -185,9 +185,9 @@ export default function LandingPage() {
 
                         <div className="grid md:grid-cols-3 gap-12">
                             {[
-                                { name: "JOHN DOE", role: "FULL STACK", bg: "bg-[#FF00D6]" },
-                                { name: "JANE SMITH", role: "ML ENGINEER", bg: "bg-[#00F0FF]" },
-                                { name: "ALEX JOHNSON", role: "BACKEND", bg: "bg-yellow-400" }
+                                { name: "Huy Pham", role: "Full stack", bg: "bg-[#FF00D6]", github: "https://github.com/huyphamcs" },
+                                { name: "Nguyen Dinh Huy", role: "Backend & DevOps", bg: "bg-[#00F0FF]", github: "https://github.com/huynguyen6906" },
+                                { name: "Tran Quang Huy", role: "Platform Engineer", bg: "bg-yellow-400", github: "https://github.com/BofMeAstaroth" }
                             ].map((member, i) => (
                                 <div key={i} className="flex flex-col">
                                     <div className={`aspect-square ${member.bg} border-4 border-black mb-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden relative group`}>
@@ -199,7 +199,7 @@ export default function LandingPage() {
                                     <div className="flex justify-between items-center">
                                         <span className="font-mono font-bold bg-black text-white px-2 py-1">{member.role}</span>
                                         <div className="flex gap-2">
-                                            <Link href="#" className="p-2 border-2 border-black hover:bg-black hover:text-white transition-colors"><Github className="w-5 h-5" /></Link>
+                                            <Link href={member.github} className="p-2 border-2 border-black hover:bg-black hover:text-white transition-colors"><Github className="w-5 h-5" /></Link>
                                             <Link href="#" className="p-2 border-2 border-black hover:bg-blue-600 hover:text-white transition-colors"><Linkedin className="w-5 h-5" /></Link>
                                         </div>
                                     </div>
