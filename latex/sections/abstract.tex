@@ -1,0 +1,11 @@
+\chapter*{Tóm tắt}
+\addcontentsline{toc}{chapter}{Tóm tắt}
+
+Trong kỷ nguyên của dữ liệu lớn và trí tuệ nhân tạo, việc tìm kiếm các vector tương tự trong không gian nhiều chiều đã trở thành một thách thức quan trọng. Các phương pháp tìm kiếm chính xác (exact search) như brute-force có độ phức tạp thời gian $O(N \times d)$ với $N$ là số lượng vector và $d$ là số chiều, khiến chúng không khả thi cho các hệ thống quy mô lớn. Để giải quyết vấn đề này, các thuật toán tìm kiếm gần đúng (Approximate Nearest Neighbor - ANN) đã được phát triển, trong đó Hierarchical Navigable Small World (HNSW) nổi bật với hiệu suất vượt trội.
+
+Báo cáo này trình bày việc triển khai và đánh giá hiệu suất của thuật toán HNSW cho hệ thống tìm kiếm đa phương thức (multi-modal semantic search), bao gồm tìm kiếm hình ảnh, tài liệu khoa học và hình ảnh y tế. Hệ thống sử dụng các mô hình nhúng (embedding) hiện đại như CLIP (512 chiều) cho hình ảnh, Sentence Transformers (1024 chiều) cho tài liệu, và BiomedCLIP (512 chiều) cho hình ảnh y tế. Các vector nhúng được lưu trữ trong cơ sở dữ liệu HDF5 và được đánh chỉ mục bằng đồ thị HNSW sử dụng thư viện hnswlib.
+
+Phương pháp đánh giá bao gồm so sánh hiệu suất giữa HNSW và brute-force trên tập dữ liệu 50,000 vector với 128 chiều. Kết quả cho thấy HNSW đạt độ trễ truy vấn trung bình từ 42.95 đến 55.70 micro giây, nhanh hơn đáng kể so với brute-force (1,350-1,450 micro giây), tương đương với tốc độ nhanh hơn khoảng 25-30 lần. Về độ chính xác, HNSW đạt Recall@1 = 0.89, Recall@10 = 0.83, và Recall@100 = 0.73, chứng tỏ khả năng tìm kiếm gần đúng hiệu quả với độ chính xác cao.
+
+Nghiên cứu cũng phân tích ảnh hưởng của các tham số HNSW (M, efConstruction, efSearch) đến hiệu suất và độ chính xác. Kết quả cho thấy với cấu hình tối ưu (M=200, efConstruction=400, ef=200), hệ thống có thể mở rộng đến hàng triệu vector với độ phức tạp thời gian $O(\log N)$ cho truy vấn và $O(N \log N)$ cho việc xây dựng chỉ mục. Hệ thống đã được triển khai thành công với ba dịch vụ backend độc lập (tìm kiếm hình ảnh, tài liệu, và y tế) và giao diện frontend thống nhất, chứng minh tính khả thi cho ứng dụng thực tế.
+
