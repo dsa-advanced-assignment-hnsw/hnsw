@@ -1,0 +1,323 @@
+\chapter{Cơ sở lý thuyết}
+Trong phần này, nhóm sinh viên nghiên cứu các nền tảng liên quan trong lĩnh vực khoa học máy tính để xây dựng thuật toán tìm kiếm bằng đồ thị HNSW.
+\section{Các vấn đề nền tảng}
+Khi những hệ thống tìm kiếm đầu tiên ra đời, ý tưởng của các nhà phát triển là làm một phép so sánh. Các doanh nghiệp sẽ có một cơ sở dữ liệu về các website, là tập hợp của các từ, câu, đoạn văn, người dùng nhập các từ cần tìm vào, đầu vào này sẽ được đem so sánh với các dữ liệu có sẵn trong cơ sở dữ liệu, và các kết quả trùng khớp sẽ được hiển thị. Hiển nhiên các doanh nghiệp cũng có một tập các từ đồng nghĩa (ví dụ như "xe hơi" và "xe 4 bánh" đều cho ra cùng một kết quả khi tìm kiếm). Mô hình như thế được gọi là lexical similarity search (tạm dịch là tương đồng về từ ngữ). Tuy nhiên, sẽ ra sao nếu doanh nghiệp không cập nhật tập các từ đồng nghĩa? Hơn nữa, ta không chỉ tìm kiếm từ ngữ. Đôi lúc ta cũng cần tìm kiếm hình ảnh (phổ biến là Google Lens). Do đó, ta cần xây dựng một hệ thống tìm kiếm mới hiện đại hơn, thông minh hơn, hiểu ý người dùng hơn. Từ đó mà semantic similarity search (tìm kiếm ngữ nghĩa) ra đời.
+
+Nền tảng của hệ thống này là ta sẽ mã hóa tất cả các dữ liệu mà người dùng nhập vào, cũng như các dữ liệu có sẵn, thành dãy các con số dưới dạng một vector nhiều chiều. Vector embedding là một vector khi ta sử dụng kĩ thuật embedding để đưa vector ban đầu, thưa, về một vector có số chiều bé hơn, dày hơn \cite{bengio2003neural}. Ngày nay, từng kiểu dữ liệu (như ảnh, văn bản, audio) thường có thể được đưa về các vector embedding. Vector database là một cơ sở dữ liệu mà ta lưu các vector embeddings đó \cite{wang2021milvus}. Thông thường, 512 là số chiều của các vector mà nhà phát triển sử dụng.
+
+Quá trình xác định giá trị tương ứng với mỗi chiều của một vector được gọi là trích xuất đặc trưng (feature extraction hay feature engineering) \cite{sharma2024multi}. Trong quá trình làm giảm số chiều, ta giữ lại các đặc trưng mà có tính quyết định lớn đến sự phân biệt giữa các điểm dữ liệu. Quá trình này được gọi là chọn lọc đặc trưng (feature selection) \cite{li2017feature}.
+
+Bài toán được đặt ra rằng đâu là thuật toán tối ưu nhất để trả ra các vector có độ tương thích cao nhất với vector đầu vào. Ban đầu các nhà phát triển nghĩ rằng ta đi so sánh đầu vào $p$ với các vector $q\in \mathbb{R}^n$ trong cơ sở dữ liệu, kết quả trả ra khi $p=q$. Tuy nhiên, điều này thường không khả thi vì hiếm khi các trường dữ liệu của hai vector được so sánh hoàn toàn bằng nhau, nhất là khi $n$ càng lớn. Do đó, ta chỉ có thể tìm ra $k$ vector có mức độ tương tự cao nhất khi so sánh với đầu vào. Bài toán k-NN ($k$ láng giềng gần nhất) có thể được phát biểu: Cho $N$ vector nhiều chiều $D = {u_1,u_2,...,u_N}$ và một vector truy vấn $q$ cùng số chiều, bài toán k-NN truy vấn một tập $kNN(D,q,k)$ gồm $k$ vector sao cho $\forall u\in kNN(D,q,k)$ và $v\in D \setminus kNN(D,q,k)$, $dis(q,u)\le dis(q,v)$ trong đó $dis(\cdot,\cdot)$ là toán tử khoảng cách giữa hai vector toán hạng \cite{wang2025timestamp}.
+
+Về vấn đề khoảng cách giữa hai vector, có nhiều hàm tính khoảng cách phù hợp trong từng ngữ cảnh nhất định. Các biểu thức \ref{eq:euclidean}, \ref{eq:manhattan}, \ref{eq:cosine} lần lượt biểu diễn khoảng cách Euclide, Manhattan, và cosine giữa hai vector. Trong ngữ cảnh các bài toán liên quan đến vector embeddings, chiều dài của các vector không quá chênh lệch, do đó ta quan tâm đến sự tương đồng giữa hai vector thông qua góc của chúng. Do đó, từ phần này về sau, khoảng cách giữa hai vector luôn được ngầm hiểu là khoảng cách cosine. Giá trị này càng bé thì hai vector đầu vào càng tương đồng nhau và ngược lại.
+
+\begin{equation}
+    d(p,q) = \sqrt{\sum_{i=1}^n(p_i-q_i)^2}
+    \label{eq:euclidean}
+\end{equation}
+\begin{equation}
+    d(p,q)=\sum_{i=1}^n|p_i-q_i|
+    \label{eq:manhattan}
+\end{equation}
+\begin{equation}
+    d(p,q)=1-\frac{\sum\limits_{i=1}^np_i\times q_i}{\sqrt{\sum\limits_{i=1}^np_i^2}+\sqrt{\sum\limits_{i=1}^nq_i^2}}
+    \label{eq:cosine}
+\end{equation}
+
+\section{Thuật toán tìm kiếm dựa trên đồ thị HNSW}
+\label{section:hnsw}
+\subsection{NSW (Navigable Small World) và giải thuật tham lam (greedy algorithm)}
+\label{subsection:NSW}
+Một ý tưởng được đặt ra là ta mô hình hóa các vector trong vector database dưới dạng một đồ thị $G(V,E)$ mà ở đó mỗi vector $v\in V$ đại diện cho một đỉnh, mỗi cạnh $e\in E$ của đồ thị thể hiện khoảng cách giữa hai vector ở hai đỉnh, và mỗi vector chỉ kết nối với một số lượng nhất định các vector có khoảng cách gần nhất \cite{malkov2014approximate}. Ở \cref{fig:nswGraph}, các vòng tròn xanh (các đỉnh) là các vector trong không gian, các cạnh đen là các kết nối giữa hai đỉnh có khoảng cách gần nhau, các đường màu đỏ là các kết nối giữa các điểm dữ liệu xa nhau, đảm bảo độ tăng trưởng logarit (rất chậm) khi dữ liệu tăng đáng kể, các mũi tên cho thấy đường đi theo giải thuật tham lam từ điểm ban đầu đến điểm gần với truy vấn. \Cref{alg:greedy_search} biểu diễn mã giả của giải thuật tham lam được sử dụng \cite{malkov2014approximate}. Giải thuật nhận vào hai tham số: truy vấn $q$ và điểm bắt đầu $V_{entry\_point}\in V$. Bắt đầu từ điểm bắt đầu, giải thuật tính toán khoảng cách từ $q$ đến các lân cận của đỉnh hiện tại, sau đó chọn đỉnh có khoảng cách ngắn nhất. Nếu khoảng cách bé nhất từ $q$ đến các lân cận này bé hơn khoảng cách từ $q$ đến điểm hiện tại, ta di chuyển đến lân cận này. Chương trình dừng khi không tìm được lân cận nào có khoảng cách đến $q$ gần hơn điểm hiện tại, và điểm hiện tại chính là kết quả cần tìm. \Cref{alg:knnsearch} biểu diễn quá trình tìm ra top-k vector gần với truy vấn $q$ nhất \cite{malkov2014approximate}. Quá trình tìm kiếm tham lam trong đồ thị NSW được gọi là zoom-out\cite{malkov2018efficient}.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.75\linewidth]{images/nswGraph.jpg}
+    \caption{Biểu diễn đồ thị của cấu trúc NSW \cite{malkov2014approximate}}
+    \label{fig:nswGraph}
+\end{figure}
+
+\begin{algorithm}
+\caption{Greedy Search Algorithm}
+\label{alg:greedy_search}
+\begin{algorithmic}[1]
+\Function{Greedy\_Search}{$q, V_{\text{entry\_point}}$}
+    \State $V_{\text{curr}} \gets V_{\text{entry\_point}}$
+    \State $\delta_{\text{min}} \gets \delta(q, V_{\text{curr}})$
+    \State $V_{\text{next}} \gets \text{NIL}$
+    \ForAll{$V_{\text{friend}} \in V_{\text{curr}}\text{.getFriends()}$}
+        \State $\delta_{\text{fr}} \gets \delta(q, V_{\text{friend}})$
+        \If{$\delta_{\text{fr}} < \delta_{\text{min}}$}
+            \State $\delta_{\text{min}} \gets \delta_{\text{fr}}$
+            \State $V_{\text{next}} \gets V_{\text{friend}}$
+        \EndIf
+    \EndFor
+    \If{$V_{\text{next}} = \text{NIL}$}
+        \State \Return $V_{\text{curr}}$
+    \Else
+        \State \Return \Call{Greedy\_Search}{$q, V_{\text{next}}$}
+    \EndIf
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{K-NN Search}\label{alg:knnsearch}
+\begin{algorithmic}[1]
+\Procedure{K-NNSearch}{$q, m, k$}
+    \State \textit{TreeSet} tempRes, candidates, visitedSet, result
+    \For{$i \gets 1$ to $m$}
+        \State Put a random entry point into \textit{candidates}
+        \State $\textit{tempRes} \gets \emptyset$
+        \Loop
+            \State $c \gets$ get element from \textit{candidates} closest to $q$
+            \State Remove $c$ from \textit{candidates}
+            \Comment{Check stop condition}
+            \If{$c$ is further from $q$ than the $k$-th element in \textit{result}}
+                \State \textbf{break}
+            \EndIf
+            \Comment{Update list of candidates}
+            \ForAll{element $e$ in friends of $c$}
+                \If{$e \not\in \textit{visitedSet}$}
+                    \State Add $e$ to \textit{visitedSet}, \textit{candidates}, and \textit{tempRes}
+                \EndIf
+            \EndFor
+        \EndLoop
+        \Comment{Aggregate the results}
+        \State Add objects from \textit{tempRes} to \textit{result}
+    \EndFor
+    \State \Return best $k$ elements from \textit{result}
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+Độ phức tạp về mặt thời gian của các phép toán dựa trên đồ thị NSW tăng trưởng theo lũy thừa của logarit. Cụ thể, phép tìm kiếm và chèn cho thấy độ phức tạp là $O(\log^2N)$, và phép toán khởi tạo có độ phúc tạp là $O(N\log^2N)$ \cite{malkov2014approximate}.
+
+Tuy nhiên, giải thuật tham lam dựa trên đồ thị NSW mắc một nhược điểm nghiêm trọng: nó dễ bị mắc kẹt trong các cực tiểu địa phương mà chưa kịp đi đến cực tiểu toàn cục. Vì vậy mà tác giả của \cite{malkov2014approximate} đã phát triển nên hierarchical NSW (HNSW) để khắc phục nhược điểm này.
+
+\subsection{HNSW (Hierarchical Navigable Small World) và đồ thị phân tầng}
+\subsubsection{Đồ thị phân tầng - nền tảng của HNSW}
+Trước khi đến với các khái niệm về đồ thị phân tầng, ta tìm hiểu một cấu trúc dữ liệu tương tự - probabilistic skip list (PSL). PSL ra đời với mục đích làm giảm độ phức tạp thời gian với những danh sách đã được sắp xếp sẵn. Ý tưởng của PSL là trong danh sách đã sắp xếp này, ta chia nó làm nhiều khu vực. Ta sẽ xác định phần tử cần tìm nằm trong khu vực nào, và ta chỉ việc tìm bên trong khu vực đó mà không cần quan tâm các khu vực đã bị loại trừ. Đó là lý do mà PSL được chia làm nhiều tầng (layer) từ cao xuống thấp với tầng càng cao thì danh sách càng thưa (biểu thị cho việc mỗi phần tử trong tầng này đại diện cho các khu vực tương ứng). Độ phức tạp thời gian cho việc tìm kiếm và thêm vào PSL là $O(\log n)$ \cite{pugh1990skip}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.75\linewidth]{images/skipList.png}
+    \caption{Một PSL với 8 phần tử, mục tiêu cần tìm là phần tử thứ 6 \cite{papadakis1993skip}}
+    \label{fig:skipList}
+\end{figure}    
+
+Áp dụng ý tưởng đó, đồ thị HNSW được xây dựng dựa trên đồ thị NSW nhưng được chia ra làm nhiều tầng, với tầng 0 là tầng dày nhất và thưa dần lên trên. Ý tưởng là ta chia đồ thị ban đầu thành nhiều khu vực, ta xác định truy vấn cần tìm có khuynh hướng nằm trong khu vực nào, và ta chỉ tìm trong khu vực đó, loại bỏ các khu vực còn lại. Trong \cref{fig:hnswGraph}, việc tìm kiếm bắt đầu từ một đỉnh ở tầng trên cùng (được thể hiện màu đỏ), các mũi tên đỏ biểu thị quá trình tìm kiếm tham lam đến truy vấn cần tìm (đỉnh màu xanh lá). Khác với quá trình zoom-out ở đồ thị NSW, đồ thị HNSW thay thế bằng quá trình zoom-in, bao gồm việc tìm kiếm tham lam ở các tầng và việc chuyển từ tầng cao đến tầng thấp \cite{malkov2018efficient}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{images/hnswGraph.png}
+    \caption{Minh họa cho ý tưởng HNSW \cite{malkov2018efficient}}
+    \label{fig:hnswGraph}
+\end{figure}
+
+Việc phân tầng này đóng vai trò quan trọng: nó chia một đồ thị thành nhiều cụm nhỏ dựa trên các đặc trưng về khoảng cách giữa các đỉnh. Ở các tầng thấp, các đỉnh trong đồ thị có các kết nối với nhau (như đã nhắc đến ở \cref{subsection:NSW}). Ở các tầng càng cao, đồ thị càng thưa, và các đỉnh sẽ có các kết nối với các đỉnh khác ở xa hơn, hàm ý rằng ở mỗi khu vực được chia ra luôn có các kết nối của một đỉnh đến một đỉnh ở khu vực khác, làm giảm đáng kể thời gian di chuyển giữa hai khu vực. Giống như trong thực tế, giả sử một người đang ở Hà Nội, người này biết rằng mình cần thiết đi đến Đà Nẵng. Vậy thì thay vì đi bằng ô tô (đi qua các điểm lân cận người này), một cách hiệu quả hơn là đi bằng máy bay (đi thẳng đến một đỉnh trong khu vực cần đến), từ đó làm giảm thời gian di chuyển.
+\subsubsection{Các thuật toán trên đồ thị HNSW}
+Giống như mọi cấu trúc dữ liệu khác (tiêu biểu là PSL), đồ thị HNSW có các hàm khởi tạo, tìm kiếm, chèn, xóa. 
+
+Thuật toán chèn được thể hiện trong \cref{alg:insert}. Thuật toán nhận các tham số đầu vào là cấu trúc đồ thị $hnsw$ hiện có, một truy vấn $q$, $M$ là số kết nối cho một đỉnh ở mỗi tầng, trong khi $M_{max}$ là giá trị tối đa của $M$. $efConstruction$ là số lân cận tại tầng 0 mà ta cần xét, nghĩa là ta sẽ chọn $M$ đỉnh lân cận tốt nhất trong $efConstruction$ đỉnh và tạo kết nối từ $q$ đến số đỉnh lân cận tốt nhất này. $m_L$ là một tham số chuẩn hóa (normalization factor), dùng để điều chỉnh độ dốc của phân phối xác suất, và theo tác giả của \cite{malkov2018efficient}, ta chọn $m_L=\dfrac{1}{\ln M}$. Với điểm được chèn vào, ta xác định tầng cao nhất $l$ có thể có của đỉnh này, được tính bằng giá trị $l=\lfloor-\ln \text{random}(0,1)\times m_L\rfloor$ với $\text{random}(\cdot,\cdot)$ là hàm lấy giá trị ngẫu nhiên nằm giữa hai tham số đầu vào. Quá trình chèn được chia làm hai giai đoạn: từ tầng $L$ là tầng cao nhất của đồ thị đến tầng $l+1$, và từ tầng $l$ về tầng 0. Đầu tiên ta đi từ tầng $L$ đến tầng $l+1$ và tìm các láng giềng gần với $q$, ở giai đoạn sau, ta kết nối $q$ với các láng giềng đã tìm, đồng thời tìm thêm các láng giềng mới để kết nối, hiển nhiên số các kết nối của $q$ ở mỗi tầng phải không lớn hơn $M_{max}$ ở tầng tương ứng. Qua quá trình nghiên cứu, tác giả của \cite{malkov2018efficient} nhận xét ta chọn $M_{max} = 2M$ ở tầng 0 và $M_{max}=M$ ở các tầng còn lại. Độ phức tạp của thuật toán chèn là $O(\log N)$ với $N$ là số vector có trong cơ sở dữ liệu \cite{malkov2018efficient}. Xét về vấn đề khởi tạo, giả sử ta muốn khởi tạo một đồ thị HNSW có $N$ phần tử, ta cần chèn từng phần tử vào đồ thị. Độ phức tạp của một thao tác chèn cho một điểm dữ liệu là $O(\log N)$, do đó mà khi khởi tạo một đồ thị, ta cần chèn $N$ điểm vào đồ thị, dẫn đến độ phức tạp cho việc khởi tạo là $O(N\log N)$ \cite{malkov2018efficient}. Mặt khác, việc lưu trữ một đồ thị có $N$ đỉnh mà tại mỗi đỉnh có $M$ kết nối làm cho độ phức tạp bộ nhớ là $O(N \times M)$.
+
+Tại mỗi tầng, việc tìm kiếm $ef$ láng giềng gần nhất để cân nhắc kết nối đến được thể hiện ở \cref{alg:search-layer}, và trong $ef$ đỉnh láng giềng này, \cref{alg:select-simple} giúp ta chọn ra $M$ đỉnh để kết nối đến. Trong đó, nhóm tác giả của \cite{malkov2018efficient} cũng phát triển một thuật toán tìm kiếm láng giềng mạnh mẽ hơn là \cref{alg:select-heuristic}. Thuật toán này không chỉ đơn giản là tìm $M$ láng giềng gần nhất trong $ef$ láng giềng, nó đảm bảo rằng các láng giềng được chọn nằm ở nhiều hướng khác nhau, làm cho đồ thị tăng phần đa dạng. Thực nghiệm cho thấy SELECT-NEIGHBORS-HEURISTIC luôn cho kết quả tốt hơn hoặc tương đương với SELECT-NEIGHBORS-SIMPLE \cite{malkov2018efficient}.
+
+Thuật toán tìm $k$ láng giềng gần nhất với truy vấn $q$ được thể hiện ở \cref{alg:knn-search}. Khác với thuật toán chèn, K-NN-SEARCH tập trung vào việc tìm các láng giềng gần nhất ở các tầng mà không tạo thêm kết nối mới.
+%====================================================================
+% Algorithm 1 from the paper
+%====================================================================
+\begin{algorithm}
+\caption{INSERT($hnsw, q, M, M_{max}, efConstruction, m_L$)}
+\label{alg:insert}
+\begin{algorithmic}[1]
+\Procedure{Insert}{$hnsw, q, M, M_{max}, efConstruction, m_L$}
+    \State $W \gets \emptyset$ \Comment{List for the currently found nearest elements}
+    \State $ep \gets$ get enter-point for $hnsw$
+    \State $L \gets$ level of $ep$ \Comment{Top layer for $hnsw$}
+    \State $l \gets \lfloor-\ln(\text{unif}(0..1)) \cdot m_L \rfloor$ \Comment{New element's level}
+    \For{$l_c \gets L$ \textbf{down to} $l+1$}
+        \State $W \gets \proc{Search-Layer}(q, ep, ef=1, l_c)$
+        \State $ep \gets$ get the nearest element from $W$ to $q$
+    \EndFor
+    \For{$l_c \gets \min(L, l)$ \textbf{down to} $0$}
+        \State $W \gets \proc{Search-Layer}(q, ep, efConstruction, l_c)$
+        \State $neighbors \gets \proc{Select-Neighbors}(q, W, M, l_c)$ \Comment{alg. 3 or alg. 4}
+        \State add bidirectional connections from $neighbors$ to $q$ at layer $l_c$
+        \ForAll{$e \in neighbors$} \Comment{Shrink connections if needed}
+            \State $eConn \gets \text{neighbourhood}(e)$ at layer $l_c$
+            \If{$|eConn| > M_{max}$} \Comment{if $l_c=0$ then $M_{max}=M_{max0}$}
+                \State $eNewConn \gets \proc{Select-Neighbors}(e, eConn, M_{max}, l_c)$
+                \State set $\text{neighbourhood}(e)$ at layer $l_c$ to $eNewConn$
+            \EndIf
+        \EndFor
+        \State $ep \gets W$
+    \EndFor
+    \If{$l > L$}
+        \State set enter-point for $hnsw$ to $q$
+    \EndIf
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+%====================================================================
+% Algorithm 2 from the paper
+%====================================================================
+\begin{algorithm}
+\caption{SEARCH-LAYER($q, ep, ef, l_c$)}
+\label{alg:search-layer}
+\begin{algorithmic}[1]
+\Procedure{Search-Layer}{$q, ep, ef, l_c$}
+    \State $v \gets ep$ \Comment{Set of visited elements}
+    \State $C \gets ep$ \Comment{Set of candidates}
+    \State $W \gets ep$ \Comment{Dynamic list of found nearest neighbors}
+    \While{$|C| > 0$}
+        \State $c \gets$ extract nearest element from $C$ to $q$
+        \State $f \gets$ get furthest element from $W$ to $q$
+        \If{distance$(c, q) >$ distance$(f, q)$}
+            \State \textbf{break} \Comment{All elements in $W$ are evaluated}
+        \EndIf
+        \ForAll{$e \in \text{neighbourhood}(c)$ at layer $l_c$} \Comment{Update $C$ and $W$}
+            \If{$e \notin v$}
+                \State $v \gets v \cup \{e\}$
+                \State $f \gets$ get furthest element from $W$ to $q$
+                \If{distance$(e, q) <$ distance$(f, q)$ or $|W| < ef$}
+                    \State $C \gets C \cup \{e\}$
+                    \State $W \gets W \cup \{e\}$
+                    \If{$|W| > ef$}
+                        \State remove furthest element from $W$ to $q$
+                    \EndIf
+                \EndIf
+            \EndIf
+        \EndFor
+    \EndWhile
+    \State \Return $W$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+%====================================================================
+% Algorithm 3 from the paper
+%====================================================================
+\begin{algorithm}
+\caption{SELECT-NEIGHBORS-SIMPLE($q, C, M$)}
+\label{alg:select-simple}
+\begin{algorithmic}[1]
+\Procedure{Select-Neighbors-Simple}{$q, C, M$}
+    \State \Return $M$ nearest elements from $C$ to $q$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+%====================================================================
+% Algorithm 4 from the paper
+%====================================================================
+\begin{algorithm}
+\caption{SELECT-NEIGHBORS-HEURISTIC($q, C, M, l_c, ...$)}
+\label{alg:select-heuristic}
+\begin{algorithmic}[1]
+\Procedure{Select-Neighbors-Heuristic}{$q, C, M, l_c, extendCandidates, keepPrunedConnections$}
+    \State $R \gets \emptyset$
+    \State $W \gets C$ \Comment{Working queue for the candidates}
+    \If{$extendCandidates$} \Comment{Extend candidates by their neighbors}
+        \ForAll{$e \in C$}
+            \ForAll{$e_{adj} \in \text{neighbourhood}(e)$ at layer $l_c$}
+                \If{$e_{adj} \notin W$}
+                    \State $W \gets W \cup \{e_{adj}\}$
+                \EndIf
+            \EndFor
+        \EndFor
+    \EndIf
+    \State $W_d \gets \emptyset$ \Comment{Queue for the discarded candidates}
+    \While{$|W| > 0$ and $|R| < M$}
+        \State $e \gets$ extract nearest element from $W$ to $q$
+        \If{$e$ is closer to $q$ than any element in $R$}
+            \State $R \gets R \cup \{e\}$
+        \Else
+            \State $W_d \gets W_d \cup \{e\}$
+        \EndIf
+    \EndWhile
+    \If{$keepPrunedConnections$}
+        \While{$|W_d| > 0$ and $|R| < M$}
+            \State $R \gets R \cup \{\text{extract nearest element from } W_d \text{ to } q\}$
+        \EndWhile
+    \EndIf
+    \State \Return $R$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+%====================================================================
+% Algorithm 5 from the paper
+%====================================================================
+\begin{algorithm}
+\caption{K-NN-SEARCH($hnsw, q, K, ef$)}
+\label{alg:knn-search}
+\begin{algorithmic}[1]
+\Procedure{K-NN-Search}{$hnsw, q, K, ef$}
+    \State $W \gets \emptyset$ \Comment{Set for the current nearest elements}
+    \State $ep \gets$ get enter-point for $hnsw$
+    \State $L \gets$ level of $ep$ \Comment{Top layer for $hnsw$}
+    \For{$l_c \gets L$ \textbf{down to} $1$}
+        \State $W \gets \proc{Search-Layer}(q, ep, ef=1, l_c)$
+        \State $ep \gets$ get nearest element from $W$ to $q$
+    \EndFor
+    \State $W \gets \proc{Search-Layer}(q, ep, ef, l_c=0)$
+    \State \Return $K$ nearest elements from $W$ to $q$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+\newpage
+\section{Các chiến lược ANN khác}
+Một thuật toán đơn giản nhất là brute-force khi ta đi tính $dis(q, u_i) \forall i\in [1,n]$ và chọn ra $k$ vector có khoảng cách bé nhất. Mặc dù phương pháp này cho kết quả hoàn toàn chính xác, nó có độ phức tạp là $O(N\times d)$ với $d$ là số chiều của các vector, điều này tốn tài nguyên và thời gian, và không phù hợp cho các hệ thống lớn gồm hàng triệu vector \cite{article}. Do đó mà người ta mới bắt đầu mô hình hóa các điểm dữ liệu sử dụng các cấu trúc dữ liệu khác như cây, đồ thị, đồ thị phân tầng (được nói đến ở phần \ref{section:hnsw}), làm quá trình truy vấn diễn ra nhanh hơn mặc dù cần đánh đổi thêm tài nguyên lưu trữ \cite{wang2021comprehensive}.
+
+Locality sensitive hashing (LSH) là một chiến lược ANN dựa trên cấu trúc bảng băm (hash table). Ý tưởng của phương pháp này là ta chia tập dữ liệu thành nhiều phần (bucket) mà ở mỗi phần, các điểm dữ liệu bên trong là tương tự nhau. Nó cũng giống như việc ta phân chia sách trong thư viện. Ta chỉ cần đi đến khu vực sách có khả năng chứa cuốn sách ta cần tìm, và tìm trong khu vực đó, thay vì phải đi đối chiếu với toàn bộ sách trong thư viện. Tương tự, khi chương trình nhận một truy vấn, chương trình sẽ xác định bucket mà chứa các điểm dữ liệu có khả năng đáp ứng truy vấn. Sâu sắc hơn, từng cặp dữ liệu sẽ có xác suất được hash vào một bucket nêu khoảng cách giữa chúng không lớn hơn một giá trị cho trước và ngược lại \cite{gionis1999similarity}. Yếu tố "xác suất" ở đây đảm bảo tính gần đúng của chiến lược ANN. Nó cho thấy rằng thuật toán đánh đổi một phần độ chính xác nhưng tối ưu hơn trong thời gian tìm kiếm mà vẫn cho ra kết quả thỏa mãn với yêu cầu \cite{gionis1999similarity}. \Cref{fig:lsh} minh họa cho nguyên lý hoạt động của các buckets. Các điểm dữ liệu gần giống nhau (cùng màu) sẽ được gom vào một bucket.
+
+Về mặt lý thuyết, LSH tối ưu hơn tìm kiếm bằng đồ thị HNSW, đặc biệt ở các tập dữ liệu thưa và nhiều chiều. Tuy nhiên, thực nghiệm cho thấy tìm kiếm bằng đồ thị HNSW cho ra hiệu suất tìm kiếm cao hơn \cite{wang2021comprehensive}. Một phiên bảng nâng cấp của LSH là Falconn đã cho thấy tính hiệu quả tương đương khi so sánh với tìm kiếm bằng đồ thị HNSW \cite{pham2022falconn++}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.25\linewidth]{images/lsh.png}
+    \caption{Minh họa cho các buckets trong thuật toán LSH \cite{chakraborty2020conlsh}}
+    \label{fig:lsh}
+\end{figure}
+
+Một chiến lược ANN khác dựa trên cấu trúc dữ liệu cây là vantage point tree (vp-tree). Trong cấu trúc vp-tree, mỗi đỉnh của đồ thị là một điểm dữ liệu nhiều chiều. Để khởi tạo, bắt đầu từ một tập điểm, ta chọn ngẫu nhiên một điểm gốc, sau đó tính khoảng cách đến các đỉnh còn lại và phân các điểm còn lại thành hai nhóm: bé hơn trung vị các khoảng cách và ngược lại. Giá trị trung vị này còn được gọi là bán kính của vantage point. Sau đó, ta áp dụng quy trình trên một cách đệ quy cho hai tập con vừa phân chia, và một cấu trúc vp-tree sẽ được tạo thành. Việc chèn một điểm mới sẽ tương tự như việc chèn một điểm vào một cây nhị phân với độ phức tạp là $O(\log N)$, và việc khởi tạo một cây vp-tree có độ phức tạp là $O(N\log N)$ với $N$ là số điểm dữ liệu hiện có. Nhược điểm của cấu trúc này là nó sẽ dễ bị suy biến thành một danh sách liên kết, hoặc một cây nhị phân không cân bằng (dẫn đến từ việc chèn điểm). 
+
+Trong \cref{fig:vp-tree}, ứng với mỗi một vantage point cho trước, ta phân không gian làm hai vùng: tập các điểm xa vantage point một khoảng $r$ và ngược lại. Khi đó, một vp-tree sẽ được khởi tạo với nút cha là vantage point đã chọn, hai tập con là hai tập ứng với hai vùng đã chia dựa trên đường tròn bán kính $r$.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.75\linewidth]{images/vp-tree.png}
+    \caption{Minh họa khởi tạo một vp-tree \cite{vptree}}
+    \label{fig:vp-tree}
+\end{figure}
+
+So sánh với HNSW, lối lưu trữ bằng vp-tree cho thấy nhu cầu bộ nhớ cần cấp phát thêm do đặc trưng của kiểu dữ liệu (memory overhead) ít hơn (do đồ thị HNSW cần lưu trữ nhiều dữ liệu về kết nối hơn vp-tree) \cite{wang2021comprehensive}. Do có đánh đổi đó nên đồ thị HNSW cho thấy hiệu năng tìm kiếm cao hơn (độ phức tạp thời gian logarit so với hàm lũy thừa của vp-tree) \cite{wang2021comprehensive}.
+
+\subsection{So sánh độ phức tạp thời gian}
+Bảng \ref{tab:complexity_comparison} so sánh độ phức tạp thời gian của các phương pháp ANN và exact search:
+
+\begin{table}[htbp]
+    \centering
+    \caption{So sánh độ phức tạp thời gian}
+    \label{tab:complexity_comparison}
+    \begin{tabular}{@{}lcc@{}}
+        \toprule
+        \textbf{Phương pháp} & \textbf{Xây dựng chỉ mục} & \textbf{Truy vấn} \\
+        \midrule
+        Brute-force & $O(1)$ & $O(N \times d)$ \\
+        LSH & $O(N)$ & $O(\log N)$ \\
+        VP-Tree & $O(N \log N)$ & $O(\log N)$ \\
+        HNSW & $O(N \log N)$ & $O(\log N)$ \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Trong đó $N$ là số lượng vector và $d$ là số chiều. HNSW có độ phức tạp tương đương với VP-Tree, nhưng thực tế cho thấy HNSW nhanh hơn đáng kể do cấu trúc đồ thị phân tầng cho phép tìm kiếm hiệu quả hơn.
+
+\section{Ứng dụng của đồ thị HNSW trong các hệ thống truy vấn vector}
+Faiss (Facebook AI Similarity Search) là một thư viện mã nguồn mở giải quyết các bài toán ANNs, được phát triển bởi đội ngũ Meta AI \cite{douze2024faiss}. Faiss mạnh mẽ trong các ứng dụng về tìm kiếm tương tự \cite{douze2024faiss}. Faiss sử dụng cấu trúc đồ thị HNSW để xây dựng vector database cho các dữ liệu có số chiều cao, ví dụ như text (768 chiều), và hình ảnh \cite{douze2024faiss}. Hơn hết, việc sử dụng cấu trúc đồ thị HNSW trong Faiss là nền tảng để cộng đồng phát triển các ứng dụng liên quan khi sử dụng Faiss, ví dụ như Milvus, có thể kể đến các ứng dụng về xử lí ảnh (image processing), thị giác máy tính (computer vision), xử lí ngôn ngữ tự nhiên (natural language processing - NLP), nhận diện giọng nói, hệ thống gọi ý (reccommender systems) và nhiều ứng dụng khác \cite{wang2021milvus}. 

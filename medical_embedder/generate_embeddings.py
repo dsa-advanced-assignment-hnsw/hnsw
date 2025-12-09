@@ -114,7 +114,7 @@ def upload_to_cloudinary(image_paths, folder="medical/fractures", rate_limit=0.1
     for img_path in tqdm(image_paths, desc="Uploading"):
         try:
             # Use filename as public_id
-            public_id = img_path.stem
+            public_id = img_path.stem   
             
             result = cloudinary.uploader.upload(
                 str(img_path),

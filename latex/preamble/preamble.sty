@@ -1,0 +1,200 @@
+\ProvidesPackage{preamble}
+\usepackage[utf8]{inputenc}
+\usepackage[T5]{fontenc}
+\usepackage[vietnamese]{babel}
+\usepackage{minted}
+\usepackage{algpseudocode}
+\usepackage{caption}
+\usepackage[
+    % twoside,
+    a4paper,
+    left=2cm, % lề trái
+    right=2cm, % lề phải
+    bottom=2cm, % lề dưới
+    top=2.5cm % lề trên
+]{geometry}
+\usepackage[utf8]{inputenc} 
+\usepackage[T5]{fontenc}    
+\usepackage{vietnam}      
+\usepackage[fontsize=13pt]{fontsize}
+
+\usepackage{algorithm}
+
+\usepackage{algpseudocode}
+
+
+\renewcommand{\rmdefault}{ptm}
+
+% \usepackage[backend=biber, style=ieee, defernumbers=true]{biblatex} % defernumbers=true có thể hữu ích
+% \addbibresource{main.bib} % Ensure 'main.bib' is in the same directory or a known path
+
+\usepackage{fix-cm}
+\usepackage{anyfontsize}
+
+
+\usepackage{indentfirst}
+\setlength{\parindent}{0.51cm} 
+
+% --- Line Spacing ---
+\usepackage{setspace}
+\setstretch{1.25}         
+
+%MATHEMATICS
+
+\usepackage{amsmath, amsfonts, amssymb, amsthm, amsxtra, amscd, bm}
+    
+
+
+%GRAPHICS & FLOATS
+%-------------------------------------------------------------------------------
+\usepackage{graphicx}
+\usepackage{float}      
+\usepackage{xcolor}     
+
+
+\usepackage{tikz}       
+\usetikzlibrary{calc} 
+\usepackage{circuitikz}
+\usetikzlibrary{arrows.meta} % Cho các kiểu mũi tên như Stealth
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+%TABLES
+
+\usepackage{longtable}  
+\usepackage{booktabs}   
+\usepackage{colortbl}   
+\usepackage{multicol}
+%-------------------------------------------------------------------------------
+% LISTS
+%-------------------------------------------------------------------------------
+\usepackage{enumitem}   
+
+% --- Custom Bullet for itemize ---
+\renewcommand*{\labelitemi}{\textendash} 
+
+%----------------------------------------------------------------------
+% HEADERS, FOOTERS & PAGE STYLE
+%----------------------------------------------------------------------
+\usepackage{fancyhdr}   
+\usepackage{lastpage}   
+
+\pagestyle{fancy}
+\fancyhf{} 
+% --- Header Configuration ---
+\fancyhead[L]{%
+    \begin{tabular}{@{}rl@{}} % @{} removes inter-column padding
+        \begin{picture}(25,15)(0,0) % Consider adjusting dimensions/placement as needed
+            \put(0,-8){\includegraphics[width=10mm, height=10mm]{images/logobk.png}}
+        \end{picture}&
+        \begin{tabular}{@{}l@{}}
+            \textcolor{black}{\textbf{\ttfamily Đại học Quốc gia TP.HCM - Trường Đại Học Bách Khoa}}\\ % \bf is deprecated, \textbf or \bfseries
+            \textcolor{black}{\textbf{\ttfamily Khoa Khoa học và Kĩ thuật máy tính}}
+        \end{tabular}
+    \end{tabular}%
+}
+\fancyhead[R]{%
+}
+
+\fancyfoot[C]{\fontsize{11pt}{13.2pt}\selectfont \thepage} 
+
+% --- Rule Configuration ---
+\renewcommand{\headrulewidth}{0.4pt}
+
+
+
+% TABLE OF CONTENTS, LIST OF FIGURES/TABLES & SECTION TITLES
+
+\usepackage{titlesec}   
+\usepackage{titletoc}   
+\usepackage{tocloft}    
+\setcounter{secnumdepth}{3} 
+
+% --- Renaming ToC, LoF, LoT Titles ---
+\renewcommand{\contentsname}{\MakeUppercase{Mục lục}}
+\renewcommand{\listfigurename}{\MakeUppercase{Danh sách hình vẽ}}
+\renewcommand{\listtablename}{\MakeUppercase{Danh sách bảng}}
+
+% --- Formatting Chapter/Section Numbering ---
+\renewcommand{\thechapter}{\arabic{chapter}}
+\renewcommand{\thesection}{\Roman{section}}
+\renewcommand{\thesubsection}{\arabic{subsection}}
+\renewcommand{\thesubsubsection}{\alph{subsubsection}}
+
+
+\titleformat{\chapter}[hang]
+    {\centering\normalfont\fontsize{18pt}{22pt}\selectfont\bfseries} % Added pt to fontsize
+    {CHƯƠNG \thechapter:}
+    {12pt} % Separation between "CHƯƠNG X:" and title
+    {\centering\MakeUppercase}
+\titlespacing*{\chapter}{0pt}{12pt}{12pt} % {left}{before-sep}{after-sep}
+
+% --- Section Title Formatting (using titlesec) ---
+\titleformat*{\section}{\fontsize{13pt}{15.6pt}\selectfont\bfseries\MakeUppercase} % Added pt, adjusted baselineskip
+\titlespacing*{\section}{0pt}{12pt}{12pt}
+
+% --- Subsection Title Formatting (using titlesec) ---
+\titleformat*{\subsection}{\fontsize{13pt}{15.6pt}\selectfont\bfseries} % Added pt, adjusted baselineskip
+\titlespacing*{\subsection}{0pt}{12pt}{12pt}
+
+% --- Subsubsection Title Formatting (using titlesec) ---
+\titleformat*{\subsubsection}{\fontsize{13pt}{15.6pt}\selectfont} % Added pt, adjusted baselineskip
+\titlespacing*{\subsubsection}{0pt}{12pt}{12pt}
+
+% --- Table of Contents Formatting (using tocloft) ---
+% Titles for ToC, LoF, LoT
+\renewcommand{\cfttoctitlefont}{\hfill\normalfont\fontsize{18pt}{22pt}\selectfont\bfseries\MakeUppercase} % Added pt
+\renewcommand{\cftloftitlefont}{\hfill\normalfont\fontsize{18pt}{22pt}\selectfont\bfseries\MakeUppercase} % Added pt
+\renewcommand{\cftlottitlefont}{\hfill\normalfont\fontsize{18pt}{22pt}\selectfont\bfseries\MakeUppercase} % Added pt
+
+% Spacing after ToC/LoF/LoT titles
+\renewcommand{\cftaftertoctitle}{\hfill\vspace{10pt}} % \hfill seems redundant if the titlefont is already centered/right-aligned
+\renewcommand{\cftafterloftitle}{\hfill\vspace{10pt}} % Consider removing \hfill if not needed.
+\renewcommand{\cftafterlottitle}{\hfill\vspace{10pt}}
+
+% Chapter entry in ToC
+\renewcommand{\cftchappresnum}{CHƯƠNG } % Text before chapter number
+\renewcommand{\cftchapaftersnum}{: }    % Text after chapter number
+\setlength{\cftchapnumwidth}{7em}     % Width allocated for "CHƯƠNG X:"
+
+\newcommand\tab[1][1cm]{\hspace*{#1}}
+
+\newcommand{\insertimage}[4]{% #1=filename, #2=width factor, #3=caption
+    \begin{figure}[htbp] % Ưu tiên htbp thay vì [H]
+        \centering
+        \includegraphics[width=#2\textwidth]{#1}
+        \caption{\centering #3} % Để căn giữa caption, dùng gói 'caption' và \captionsetup{justification=centering}
+                     % \centering trong \caption{} không phải là cách chuẩn.
+        \label{fig:#4} % Đảm bảo tên file #1 không chứa ký tự đặc biệt làm hỏng label.
+    \end{figure}%
+}
+
+%-------------------------------------------------------------------------------
+% 14. HYPERLINKS (Generally should be loaded last)
+%-------------------------------------------------------------------------------
+\usepackage{hyperref}
+\usepackage{cleveref}
+\crefname{figure}{hình}{hình}
+\crefname{algorithm}{thuật toán}{thuật toán}
+
+% \hypersetup{
+%     colorlinks=true,
+%     linkcolor=black, % Màu của các liên kết nội bộ
+%     citecolor=green, % Màu của các trích dẫn
+%     urlcolor=magenta, % Màu của các URL
+%     pdftitle={\@title}, % Lấy tiêu đề từ \title (nếu có)
+%     pdfauthor={\@author}, % Lấy tác giả từ \author (nếu có)
+%     pdfsubject={}, % Chủ đề
+%     pdfkeywords={}, % Từ khóa
+%     pdfflag_authors=true % Đảm bảo \@author được xử lý đúng
+% }
+
+% ĐỊNH NGHĨA LỆNH IN ĐẬM SỬ DỤNG PMB (nếu muốn đậm hơn \mathbf)
+\newcommand{\extrabold}[1]{\pmb{#1}} % Đổi tên để rõ ràng hơn
+\newcommand{\formalvec}[1]{\mathbf{#1}} % Lệnh cho vector dạng trang trọng (đứng thẳng, đậm)
+\newcommand{\formalvecExtraBold}[1]{\extrabold{\mathbf{#1}}} % Trang trọng và đậm hơn nữa
+
+%-------------------------------------------------------------------------------
+% --- Các tham số tùy chỉnh cho khung 3 lớp ---
+% Khoảng cách từ mép giấy đến TÂM của đường kẻ NGOÀI CÙNG NHẤT (đường mỏng)
+% Định nghĩa màu cho header của bảng
+\definecolor{TableHeaderBlue}{HTML}{D9E2F3} % Màu xanh nhạt giống hình ảnh

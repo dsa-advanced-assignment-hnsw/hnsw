@@ -1,0 +1,29 @@
+\chapter{Mở đầu}
+\section{Bối cảnh}
+Trong kỷ nguyên của dữ liệu lớn và trí tuệ nhân tạo, các hệ thống tìm kiếm ngữ nghĩa (semantic search) đã trở thành nền tảng quan trọng cho nhiều ứng dụng hiện đại. Từ tìm kiếm hình ảnh bằng ngôn ngữ tự nhiên, tra cứu tài liệu khoa học, đến chẩn đoán y tế hỗ trợ AI, tất cả đều dựa trên khả năng tìm kiếm các vector embedding tương tự trong không gian nhiều chiều.
+
+Vector database là cơ sở dữ liệu chuyên dụng để lưu trữ và truy vấn các vector embedding - các biểu diễn số học của dữ liệu đa phương thức (hình ảnh, văn bản, âm thanh). Tuy nhiên, khi số lượng vector lên đến hàng triệu hoặc hàng tỷ, việc tìm kiếm chính xác (exact search) trở nên không khả thi do độ phức tạp thời gian $O(N \times d)$. Do đó, các thuật toán tìm kiếm gần đúng (Approximate Nearest Neighbor - ANN) đã được phát triển để đánh đổi một phần độ chính xác để đạt được tốc độ tìm kiếm nhanh hơn đáng kể.
+
+\section{Mục tiêu}
+Trong bài tập lớn này, nhóm sinh viên nghiên cứu xây dựng hệ thống tìm kiếm vector gần đúng (Approximate Nearest Neighbor – ANN) sử dụng cấu trúc đồ thị HNSW – một trong những thuật toán tiên tiến nhất đang được sử dụng rộng rãi trong các hệ thống vector database hiện đại như FAISS, Milvus, Weaviate. 
+
+Các mục tiêu cụ thể bao gồm:
+\begin{itemize}
+    \item Xây dựng đồ thị HNSW cho hệ thống tìm kiếm đa phương thức (hình ảnh, tài liệu, hình ảnh y tế)
+    \item Đánh giá hiệu suất của HNSW so với phương pháp brute-force trên các chỉ số: độ trễ (latency), độ chính xác (recall), và khả năng mở rộng (scalability)
+    \item Phân tích ảnh hưởng của các tham số HNSW (M, efConstruction, efSearch) đến hiệu suất
+    \item Triển khai hệ thống production-ready với API backend và giao diện frontend
+\end{itemize}
+
+Đề tài giúp sinh viên hiểu rõ nguyên lý tổ chức dữ liệu bằng đồ thị phân tầng, cơ chế tìm kiếm tham lam (greedy), cũng như khả năng mở rộng và ứng dụng thực tiễn của HNSW.
+
+\section{Yêu cầu kỹ thuật}
+Hệ thống cần đáp ứng các yêu cầu sau:
+\begin{itemize}
+    \item Hỗ trợ tìm kiếm đa phương thức: hình ảnh (CLIP), tài liệu (Sentence Transformers), hình ảnh y tế (BiomedCLIP)
+    \item Độ trễ truy vấn dưới 100ms cho tập dữ liệu 100K+ vector
+    \item Độ chính xác Recall@10 $\geq$ 0.80
+    \item Khả năng mở rộng đến hàng triệu vector
+    \item API RESTful với tài liệu đầy đủ
+    \item Giao diện người dùng trực quan và dễ sử dụng
+\end{itemize}

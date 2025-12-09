@@ -107,7 +107,59 @@ class MedicalSearchEngine:
 
         self.index = None
         self.image_urls = None
+        self.url_mapping = {}  # Mapping from incomplete URLs to complete URLs
+        self.load_url_mapping()
         self.load_index()
+
+    def load_url_mapping(self):
+        """Load URL mapping from cloudinary_urls.json if available to fix incomplete URLs"""
+        json_path = os.path.join(os.path.dirname(__file__), '..', 'medical_embedder', 'cloudinary_urls.json')
+        if not os.path.exists(json_path):
+            # Try alternative location
+            json_path = os.path.join(os.path.dirname(__file__), 'cloudinary_urls.json')
+        
+        if os.path.exists(json_path):
+            try:
+                import json
+                with open(json_path, 'r') as f:
+                    cloudinary_data = json.load(f)
+                
+                # Create mapping from base URL (up to filename) to complete URL
+                for item in cloudinary_data:
+                    if 'url' in item:
+                        complete_url = item['url']
+                        # Extract base path (up to last slash) for mapping
+                        if '/' in complete_url:
+                            # Get the part before the filename
+                            base_path = '/'.join(complete_url.split('/')[:-1]) + '/'
+                            self.url_mapping[base_path] = complete_url
+                            # Also map without trailing slash
+                            base_path_no_slash = '/'.join(complete_url.split('/')[:-1])
+                            self.url_mapping[base_path_no_slash] = complete_url
+                
+                print(f"✅ Loaded {len(self.url_mapping)} URL mappings from cloudinary_urls.json")
+            except Exception as e:
+                print(f"⚠️  Could not load URL mapping: {e}")
+        else:
+            print("ℹ️  cloudinary_urls.json not found - incomplete URLs may not be fixed")
+
+    def fix_incomplete_url(self, url):
+        """Fix incomplete URLs (ending with /) using URL mapping"""
+        if not url or not isinstance(url, str):
+            return url
+        
+        url = url.strip()
+        # Check if URL ends with trailing slash (incomplete)
+        if url.endswith('/'):
+            # Try to find complete URL in mapping
+            if url in self.url_mapping:
+                fixed_url = self.url_mapping[url]
+                print(f"🔧 Fixed incomplete URL: {url[:60]}... → {fixed_url[:60]}...")
+                return fixed_url
+            else:
+                print(f"⚠️  Incomplete URL not found in mapping: {url[:80]}...")
+        
+        return url
 
     def load_index(self):
         """Load the pre-built HNSW index and image URLs"""
@@ -324,6 +376,8 @@ class MedicalSearchEngine:
             for idx, distance in zip(indices[0], distances[0]):
                 image_url = self.image_urls[idx].decode('utf-8') if isinstance(self.image_urls[idx], bytes) else str(self.image_urls[idx])
                 image_url = image_url.strip()  # Remove any trailing whitespace/newlines
+                # Fix incomplete URLs (ending with /)
+                image_url = self.fix_incomplete_url(image_url)
                 similarity_score = 1 - distance  # Convert distance to similarity
                 results.append({
                     'path': image_url,  # Keep 'path' key for frontend compatibility
@@ -372,6 +426,8 @@ class MedicalSearchEngine:
             for idx, distance in zip(indices[0], distances[0]):
                 image_url = self.image_urls[idx].decode('utf-8') if isinstance(self.image_urls[idx], bytes) else str(self.image_urls[idx])
                 image_url = image_url.strip()  # Remove any trailing whitespace/newlines
+                # Fix incomplete URLs (ending with /)
+                image_url = self.fix_incomplete_url(image_url)
                 similarity_score = 1 - distance  # Convert distance to similarity
                 results.append({
                     'path': image_url,  # Keep 'path' key for frontend compatibility

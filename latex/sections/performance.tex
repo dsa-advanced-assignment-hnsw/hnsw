@@ -1,0 +1,227 @@
+\chapter{Đánh giá hiệu suất}
+
+\section{Phương pháp đánh giá}
+
+\subsection{Cấu hình phần cứng và môi trường}
+Các thí nghiệm được thực hiện trên nền tảng đám mây Google Colab (phiên bản miễn phí) với cấu hình chi tiết như sau:
+\begin{itemize}
+    \item \textbf{Môi trường}: Google Colab (Free Tier)
+    \item \textbf{CPU}: Intel Xeon (2 vCPUs @ 2.20GHz)
+    \item \textbf{RAM}: $\approx$ 12.7 GB
+    \item \textbf{GPU}: Không sử dụng (Chế độ CPU-only)
+    \item \textbf{Hệ điều hành}: Linux (Ubuntu 22.04 LTS)
+    \item \textbf{Python}: 3.10+
+    \item \textbf{Thư viện}: hnswlib 0.8.0, faiss-cpu, numpy 1.24.0, PyTorch 2.0+
+\end{itemize}
+
+\subsection{Cấu hình thí nghiệm}
+\begin{itemize}
+    \item \textbf{Số lượng vector}: 10,000
+    \item \textbf{Số chiều}: 128 (cho thí nghiệm benchmark)
+    \item \textbf{Số truy vấn}: 100
+    \item \textbf{Giá trị K}: [1, 5, 10, 20, 50, 100]
+    \item \textbf{Cấu hình HNSW}: M=40, efConstruction=200, ef=100
+\end{itemize}
+
+\subsection{Các phương pháp và triển khai được đánh giá}
+Trong nghiên cứu này, chúng tôi so sánh hiệu năng của giải pháp tìm kiếm chính xác (Exact Search) với \textbf{các triển khai khác nhau của thuật toán HNSW} (HNSW-based Implementations). Các phương pháp được chia thành hai nhóm chính:
+
+\begin{itemize}
+    \item \textbf{Baseline}: Sử dụng thuật toán tìm kiếm vét cạn (Brute-force) để làm chuẩn so sánh về độ chính xác.
+    \item \textbf{HNSW Implementations}: Bao gồm thư viện \texttt{hnswlib} (triển khai gốc) và các cấu hình tối ưu hóa trong thư viện FAISS (\texttt{HNSW-Flat}, \texttt{SQ}, \texttt{PQ}) để đánh giá khả năng cân bằng giữa tốc độ, bộ nhớ và độ chính xác.
+\end{itemize}
+
+\section{Các chỉ số đánh giá}
+
+\subsection{Độ trễ (Latency)}
+Độ trễ được đo bằng thời gian trung bình để thực hiện một truy vấn, tính bằng micro giây (µs). Kết quả từ thí nghiệm benchmark được trình bày trong \Cref{tab:latency_comparison}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{So sánh độ trễ giữa HNSW và Brute-force}
+    \label{tab:latency_comparison}
+    \begin{tabular}{@{}cccccc@{}}
+        \toprule
+        \textbf{K} & \textbf{Brute-force (µs)} & \textbf{HNSWlib (µs)} & \textbf{HNSW-Flat (µs)} & \textbf{HNSW-SQ (µs)} & \textbf{HNSW-PQ (µs)} \\
+        \midrule
+        1   & 587.3     & 260.7   & 213.0  & 208.8  & 98.3   \\ 
+        5   & 593.9     & 261.7   & 220.0  & 208.1  & 98.7   \\
+        10  & 600.9     & 266.9   & 218.8  & 211.0  & 100.0  \\
+        20  & 591.6     & 258.9   & 214.3  & 211.2  & 102.6  \\
+        50  & 593.7     & 264.9   & 216.9  & 219.8  & 109.1  \\
+        100 & 573.9     & 267.4   & 229.3  & 230.9  & 119.6  \\
+
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{images/time_recallK.png}
+    \caption{Biểu đồ so sánh độ trễ giữa HNSW và Brute-force}
+    \label{fig:system_architecture}
+\end{figure}
+
+
+Kết quả cho thấy các thuật toán dựa trên HNSW cải thiện đáng kể tốc độ truy vấn so với phương pháp vét cạn (Brute-force). Cụ thể, thuật toán HNSW-PQ cho hiệu năng tốt nhất với độ trễ trung bình khoảng 98 µs, nhanh gấp 6 lần so với Brute-force (~590 µs). Các biến thể khác như HNSWLib, HNSW-Flat và HNSW-SQ cũng duy trì độ trễ ổn định trong khoảng 200-260 µs, nhanh hơn Brute-force từ 2.2 đến 2.8 lần.
+
+\subsection{Độ chính xác (Accuracy)}
+Độ chính xác được đo bằng Recall@K, được định nghĩa là tỷ lệ các kết quả từ HNSW xuất hiện trong top-K kết quả chính xác từ brute-force. Kết quả được trình bày trong \Cref{tab:recall_comparison}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Độ chính xác Recall@K của HNSW}
+    \label{tab:recall_comparison}
+    \begin{tabular}{@{}ccccc@{}}
+        \toprule
+        \textbf{K} & & \textbf{Recall@K} & & \\
+         & \textbf{HNSWLib} & \textbf{HNSW-Flat} & \textbf{HNSW-SQ} & \textbf{HNSW-PQ} \\
+        \midrule
+        1   & 0.9800  & 0.9800  & 0.9500  & 0.1700  \\
+        5   & 0.9680  & 0.9800  & 0.9640  & 0.2560  \\
+        10  & 0.9670  & 0.9740  & 0.9620  & 0.2900  \\
+        20  & 0.9625  & 0.9695  & 0.9600  & 0.3110  \\
+        50  & 0.9412  & 0.9508  & 0.9454  & 0.3318  \\
+        100 & 0.9196  & 0.9315  & 0.9277  & 0.3565  \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{images/recallK.png}
+    \caption{Biểu đồ so sánh độ chính xác Recall@K của HNSW}
+    \label{fig:system_architecture}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{Độ chính xác cao nhất (HNSWLib \& HNSW-Flat):} Hai đường biểu diễn nằm sát đường cơ sở (\textit{Brute Force}) với Recall@1 đạt $0.98$. Đây là lựa chọn tối ưu khi ưu tiên độ chính xác tuyệt đối và không bị giới hạn về bộ nhớ RAM.
+
+    \item \textbf{Cân bằng tối ưu (HNSW-SQ):} Mặc dù sử dụng lượng tử hóa vô hướng (\textit{Scalar Quantization}) để nén dữ liệu, độ chính xác vẫn rất cao (Recall@1 đạt $0.95$), chỉ thấp hơn bản Flat không đáng kể. Đây là phương pháp hiệu quả nhất xét trên tỷ lệ \textit{hiệu năng/tài nguyên}.
+
+    \item \textbf{Hiệu năng thấp (HNSW-PQ):} Kỹ thuật \textit{Product Quantization} trong trường hợp này làm mất mát quá nhiều thông tin, dẫn đến độ chính xác rất thấp (Recall@1 chỉ đạt $0.17$). Không khuyến nghị sử dụng cấu hình này cho tập dữ liệu hiện tại.
+\end{itemize}
+
+\noindent \textbf{Kết luận:} Dựa trên biểu đồ, \textbf{HNSW-SQ} là giải pháp tốt nhất để triển khai thực tế nhờ khả năng tiết kiệm bộ nhớ trong khi vẫn duy trì độ chính xác cao (~$96\%$).
+
+\subsection{Ảnh huởng của các thành phần đến độ chính xác và độ trễ}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{images/reacall1_hnswlib.png}
+    \caption{Ảnh hưởng của các tham số đến độ chính xác Recall@1 (HNSWLib)}
+    \label{fig: hnsw_params}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{images/recall1_time_hnswlib.png}
+    \caption{Ảnh hưởng của các tham số đến độ trễ khi truy vấn của thuật toán (HNSWLib)}
+    \label{fig: hnsw_time_params}
+\end{figure}
+
+\subsubsection{Phân tích độ chính xác (Accuracy Analysis)}
+\begin{itemize}
+    \item \textbf{Vai trò của tham số M:} Độ chính xác tỉ lệ thuận với số lượng liên kết $M$. Các cấu hình $M \ge 32$ (đường màu xanh dương và cam) nhanh chóng đạt mức bão hòa (Recall $\approx 0.99$) ngay tại các giá trị $efSearch$ thấp. Ngược lại, với $M=4$, cấu trúc đồ thị quá thưa khiến thuật toán không thể đạt độ chính xác chấp nhận được.
+    \item \textbf{Tác động của efConstruction:} Việc tăng $efConstruction$ từ 16 lên 200 giúp đường cong Recall tiệm cận mức 1.0 nhanh hơn. Điều này chứng tỏ chất lượng đồ thị tốt hơn (được xây dựng kỹ hơn) sẽ giảm bớt gánh nặng tính toán trong giai đoạn tìm kiếm.
+\end{itemize}
+
+\subsubsection{Phân tích tốc độ tìm kiếm (Latency Analysis)}
+Biểu đồ tốc độ sử dụng thang đo logarit (Log Scale) để làm nổi bật sự chênh lệch lớn về hiệu năng:
+\begin{itemize}
+    \item \textbf{Hiệu quả so với Brute-force:} Tất cả các cấu hình HNSW đều có thời gian truy vấn thấp hơn đáng kể so với phương pháp vét cạn (đường màu đỏ - Baseline). Ngay cả ở cấu hình chậm nhất ($M=64, efSearch=300$), HNSW vẫn nhanh hơn Brute-force gần một bậc độ lớn (order of magnitude).
+    \item \textbf{Chi phí thời gian của M:} Tăng $M$ làm tăng thời gian tìm kiếm do số lượng phép tính khoảng cách tại mỗi bước nhảy tăng lên. Đường $M=64$ (xanh dương) nằm cao nhất trên biểu đồ thời gian, trong khi $M=4$ (tím) là nhanh nhất nhưng lại không đảm bảo độ chính xác.
+\end{itemize}
+
+\subsubsection{Kết luận về sự đánh đổi (Trade-off Conclusion)}
+Từ sự đối chiếu giữa hai biểu đồ, ta rút ra các nhận định quan trọng để lựa chọn cấu hình:
+
+\begin{enumerate}
+    \item \textbf{Điểm bão hòa hiệu năng:} Tại mức $efSearch \approx 100-150$, độ chính xác của các mô hình $M \ge 16$ đã đạt đỉnh. Việc tiếp tục tăng $efSearch$ sau điểm này (ví dụ lên 300) làm thời gian truy vấn tăng tuyến tính nhưng độ chính xác gần như không đổi. Đây là vùng lãng phí tài nguyên cần tránh.
+    
+    \item \textbf{Cấu hình tối ưu (Sweet Spot):} Cấu hình $M=32$ với $efConstruction=200$ mang lại sự cân bằng tốt nhất. 
+    \begin{itemize}
+        \item So với $M=64$: Độ chính xác gần như tương đương nhưng tốc độ nhanh hơn khoảng 30-40\%.
+        \item So với $M=16$: Tốc độ chậm hơn không đáng kể nhưng độ ổn định của Recall cao hơn nhiều.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Phân tích cấu trúc đồ thị HNSW mô phỏng}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{images/Graph.png}
+    \caption{Thống kê cáu trúc đồ thị HNSW mô phỏng}
+    \label{fig: hnsw_graph}
+\end{figure}
+
+
+Dựa trên kết quả mô phỏng với kích thước tập dữ liệu $N = 10,000$, cấu trúc đồ thị HNSW hình thành như sau:
+
+\subsubsection{Phân cấp số lượng tầng}
+Đồ thị được tổ chức thành 4 tầng riêng biệt (từ Layer 0 đến Layer 3), tuân theo quy luật giảm dần theo hàm mũ để tối ưu hóa đường dẫn tìm kiếm:
+\begin{itemize}
+    \item \textbf{Tầng 0 (Layer 0):} Chứa toàn bộ $10,000$ vector dữ liệu. Đây là tầng cơ sở lưu trữ đầy đủ thông tin.
+    \item \textbf{Các tầng định hướng (Layer 1 - 3):} Số lượng nút giảm mạnh để tạo thành cấu trúc "Small World":
+    \begin{itemize}
+        \item Layer 1: $625$ nút.
+        \item Layer 2: $39$ nút.
+        \item Layer 3: $2$ nút.
+    \end{itemize}
+\end{itemize}
+Tỷ lệ giảm giữa các tầng xấp xỉ $1/16$, cho thấy tham số xác suất xây dựng tầng ($probability\_factor$) hoạt động ổn định ở mức $6.25\%$.
+
+\subsubsection{Độ kết nối và bậc trung bình}
+Tại tầng 0, tính chất liên kết của các vector được thể hiện qua phân phối bậc (Degree Distribution):
+\begin{itemize}
+    \item \textbf{Bậc trung bình:} Mỗi nút có trung bình khoảng $32$ liên kết với các nút láng giềng.
+    \item \textbf{Phân phối:} Biểu đồ tần suất cho thấy sự phân bố tập trung (dạng hình chuông), với đa số các nút có từ $25$ đến $45$ cạnh. Điều này đảm bảo tính đồng nhất của đồ thị, hạn chế sự xuất hiện của các nút cô lập hoặc các "siêu nút" (hubs) gây mất cân bằng tải khi duyệt.
+\end{itemize}
+
+\subsubsection{Điểm vào (Entry Point)}
+Điểm khởi đầu cho thuật toán tìm kiếm nằm tại tầng cao nhất (Layer 3). Với chỉ duy nhất $2$ nút tại tầng này, hệ thống có thể xác định hướng đi ban đầu gần như tức thời trước khi điều hướng xuống các tầng chi tiết hơn.
+
+\section{Điều chỉnh tham số}
+
+\subsection{Ảnh hưởng của tham số M}
+Tham số M (số kết nối tối đa) ảnh hưởng đến:
+\begin{itemize}
+    \item \textbf{Độ chính xác}: M lớn hơn → độ chính xác cao hơn nhưng chậm hơn
+    \item \textbf{Bộ nhớ}: M lớn hơn → sử dụng nhiều bộ nhớ hơn
+    \item \textbf{Thời gian xây dựng}: M lớn hơn → mất nhiều thời gian hơn
+\end{itemize}
+
+\subsection{Ảnh hưởng của efConstruction}
+Tham số efConstruction (số láng giềng xem xét khi xây dựng) ảnh hưởng đến:
+\begin{itemize}
+    \item \textbf{Chất lượng đồ thị}: efConstruction lớn hơn → đồ thị tốt hơn
+    \item \textbf{Thời gian xây dựng}: efConstruction lớn hơn → mất nhiều thời gian hơn
+\end{itemize}
+
+\subsection{Ảnh hưởng của efSearch}
+Tham số efSearch (số láng giềng xem xét khi tìm kiếm) ảnh hưởng đến:
+\begin{itemize}
+    \item \textbf{Độ chính xác}: efSearch lớn hơn → độ chính xác cao hơn
+    \item \textbf{Thời gian truy vấn}: efSearch lớn hơn → chậm hơn
+\end{itemize}
+
+\section{So sánh với các phương pháp khác}
+
+\subsection{So sánh với LSH}
+Locality Sensitive Hashing (LSH) là một phương pháp ANN khác dựa trên hash tables. So sánh:
+\begin{itemize}
+    \item \textbf{Độ chính xác}: HNSW thường đạt Recall cao hơn LSH
+    \item \textbf{Tốc độ}: HNSW nhanh hơn LSH trong hầu hết các trường hợp
+    \item \textbf{Bộ nhớ}: LSH có thể tiết kiệm bộ nhớ hơn một chút
+    \item \textbf{Độ phức tạp}: Cả hai đều có độ phức tạp $O(\log N)$ cho truy vấn
+\end{itemize}
+
+\subsection{So sánh với VP-Tree}
+Vantage Point Tree là phương pháp ANN dựa trên cây. So sánh:
+\begin{itemize}
+    \item \textbf{Độ chính xác}: HNSW đạt độ chính xác cao hơn
+    \item \textbf{Tốc độ}: HNSW nhanh hơn đáng kể
+    \item \textbf{Bộ nhớ}: VP-Tree tiết kiệm bộ nhớ hơn
+    \item \textbf{Khả năng mở rộng}: HNSW mở rộng tốt hơn cho dữ liệu lớn
+\end{itemize}
+

@@ -1,0 +1,107 @@
+\chapter{Kết luận}
+
+\section{Tính khả thi cho ứng dụng thực tế}
+
+Kết quả nghiên cứu cho thấy HNSW là một giải pháp rất khả thi cho các ứng dụng tìm kiếm vector trong thực tế. Với độ trễ truy vấn dưới 100 micro giây và độ chính xác Recall@10 trên 80\%, hệ thống đáp ứng được các yêu cầu của hầu hết các ứng dụng production.
+
+\subsection{Ưu điểm}
+\begin{itemize}
+    \item \textbf{Tốc độ cao}: HNSW nhanh hơn brute-force từ 20-30 lần, đạt độ trễ dưới 100µs
+    \item \textbf{Độ chính xác tốt}: Recall@10 đạt trên 80\%, đủ cho hầu hết các ứng dụng
+    \item \textbf{Khả năng mở rộng}: Có thể xử lý hàng triệu vector với độ phức tạp $O(\log N)$
+    \item \textbf{Đa phương thức}: Hỗ trợ nhiều loại dữ liệu (hình ảnh, văn bản, y tế)
+    \item \textbf{Triển khai đơn giản}: Thư viện hnswlib dễ sử dụng và tối ưu hóa cao
+\end{itemize}
+
+\subsection{Ứng dụng thực tế}
+Hệ thống đã được triển khai thành công với ba dịch vụ:
+\begin{itemize}
+    \item \textbf{Tìm kiếm hình ảnh}: 100,000+ hình ảnh từ Open Images V7
+    \item \textbf{Tìm kiếm tài liệu}: 100,000+ bài báo khoa học từ arXiv
+    \item \textbf{Tìm kiếm y tế}: 3,400+ hình ảnh X-quang gãy xương
+\end{itemize}
+
+Tất cả các dịch vụ đều hoạt động ổn định với API RESTful và giao diện web thân thiện.
+
+\section{Hạn chế}
+
+Mặc dù có nhiều ưu điểm, HNSW vẫn có một số hạn chế:
+
+\subsection{Hạn chế về bộ nhớ}
+\begin{itemize}
+    \item \textbf{Overhead bộ nhớ}: Mỗi nút cần lưu trữ M kết nối, dẫn đến overhead $O(N \times M)$
+    \item \textbf{Với M=200}: Cần ~3-4GB RAM cho 100K vector, ~30-40GB cho 1M vector
+    \item \textbf{Giải pháp}: Có thể giảm M để tiết kiệm bộ nhớ, nhưng sẽ giảm độ chính xác
+\end{itemize}
+
+\subsection{Độ nhạy với tham số}
+\begin{itemize}
+    \item \textbf{Tham số phức tạp}: Cần điều chỉnh M, efConstruction, efSearch cho từng loại dữ liệu
+    \textbf{Thời gian điều chỉnh}: Cần nhiều thí nghiệm để tìm cấu hình tối ưu
+    \item \textbf{Giải pháp}: Sử dụng cấu hình mặc định được đề xuất hoặc tự động điều chỉnh
+\end{itemize}
+
+\subsection{Thời gian xây dựng chỉ mục}
+\begin{itemize}
+    \item \textbf{Độ phức tạp}: $O(N \log N)$ - tăng nhanh với số lượng vector lớn
+    \item \textbf{Với 1M vector}: Cần 1-2 giờ để xây dựng chỉ mục
+    \item \textbf{Giải pháp}: Xây dựng chỉ mục offline, lưu vào file .bin để tải nhanh
+\end{itemize}
+
+\subsection{Hạn chế về cập nhật động}
+\begin{itemize}
+    \item \textbf{Chèn mới}: Có thể chèn vector mới, nhưng chất lượng đồ thị có thể giảm
+    \item \textbf{Xóa}: Không hỗ trợ xóa vector hiệu quả
+    \item \textbf{Giải pháp}: Xây dựng lại chỉ mục định kỳ hoặc sử dụng cấu trúc dữ liệu khác
+\end{itemize}
+
+\section{Khuyến nghị cho tương lai}
+
+\subsection{Tối ưu hóa hiệu suất}
+\begin{itemize}
+    \item \textbf{GPU acceleration}: Sử dụng GPU để tăng tốc quá trình mã hóa embedding
+    \item \textbf{Parallel indexing}: Xây dựng chỉ mục song song trên nhiều CPU cores
+    \item \textbf{Caching}: Cache các truy vấn phổ biến để giảm thời gian phản hồi
+    \item \textbf{Compression}: Nén vector embedding để giảm bộ nhớ và tăng tốc độ tải
+\end{itemize}
+
+\subsection{Mở rộng quy mô}
+\begin{itemize}
+    \item \textbf{Distributed HNSW}: Phân tán đồ thị HNSW trên nhiều máy chủ
+    \item \textbf{Sharding}: Chia dataset thành nhiều shard, mỗi shard có HNSW riêng
+    \item \textbf{Load balancing}: Cân bằng tải giữa các máy chủ để xử lý nhiều truy vấn đồng thời
+    \item \textbf{Cloud deployment}: Triển khai trên cloud để dễ dàng mở rộng
+\end{itemize}
+
+\subsection{Cải thiện độ chính xác}
+\begin{itemize}
+    \item \textbf{Adaptive parameters}: Tự động điều chỉnh tham số dựa trên đặc điểm dữ liệu
+    \item \textbf{Hybrid search}: Kết hợp HNSW với các phương pháp khác (LSH, quantization)
+    \item \textbf{Re-ranking}: Sử dụng mô hình re-ranking để cải thiện thứ tự kết quả
+    \item \textbf{Learning to rank}: Huấn luyện mô hình để tối ưu hóa thứ tự kết quả
+\end{itemize}
+
+\subsection{Cập nhật động}
+\begin{itemize}
+    \item \textbf{Incremental updates}: Hỗ trợ cập nhật chỉ mục mà không cần xây dựng lại
+    \item \textbf{Delete support}: Thêm khả năng xóa vector hiệu quả
+    \item \textbf{Versioning}: Quản lý phiên bản chỉ mục để rollback khi cần
+    \item \textbf{Real-time indexing}: Cập nhật chỉ mục theo thời gian thực
+\end{itemize}
+
+\subsection{Ứng dụng mở rộng}
+\begin{itemize}
+    \item \textbf{Multi-modal fusion}: Kết hợp nhiều loại embedding (hình ảnh + văn bản)
+    \item \textbf{Personalization}: Tùy chỉnh kết quả tìm kiếm theo người dùng
+    \item \textbf{Recommendation}: Sử dụng HNSW cho hệ thống gợi ý
+    \item \textbf{Anomaly detection}: Phát hiện các vector bất thường trong dataset
+\end{itemize}
+
+\section{Tổng kết}
+
+Nghiên cứu này đã thành công trong việc triển khai và đánh giá hiệu suất của thuật toán HNSW cho hệ thống tìm kiếm đa phương thức. Kết quả cho thấy HNSW là một giải pháp hiệu quả và khả thi cho các ứng dụng tìm kiếm vector trong thực tế, với tốc độ nhanh, độ chính xác cao và khả năng mở rộng tốt.
+
+Hệ thống đã được triển khai thành công với ba dịch vụ backend độc lập và một frontend thống nhất, chứng minh tính khả thi cho ứng dụng production. Với các cải tiến được đề xuất, hệ thống có thể được mở rộng để xử lý hàng triệu vector và phục vụ nhiều người dùng đồng thời.
+
+Nghiên cứu này cung cấp nền tảng vững chắc cho việc phát triển các ứng dụng tìm kiếm vector trong tương lai, và mở ra nhiều hướng nghiên cứu thú vị về tối ưu hóa hiệu suất, mở rộng quy mô và cải thiện độ chính xác.
+
