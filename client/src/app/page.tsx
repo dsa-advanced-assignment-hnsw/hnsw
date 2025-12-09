@@ -1,13 +1,28 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight, Search, Book, Activity, Github, Linkedin, ArrowUpRight } from 'lucide-react';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import Lenis from 'lenis';
+import HNSWHeroCanvas from '@/components/hnsw-visuals/HNSWHeroCanvas';
+import GraphBackgroundPattern from '@/components/hnsw-visuals/GraphBackgroundPattern';
+import FeatureCardWithNodes from '@/components/hnsw-visuals/FeatureCardWithNodes';
 
 export default function LandingPage() {
     const containerRef = useRef(null);
+    const [isMobile, setIsMobile] = useState(false);
+
+    // Detect mobile for responsive HNSW canvas configuration
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 640);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     // Smooth scroll initialization
     useEffect(() => {
@@ -37,9 +52,9 @@ export default function LandingPage() {
             transition: {
                 x: {
                     repeat: Infinity,
-                    repeatType: "loop",
+                    repeatType: "loop" as const,
                     duration: 20,
-                    ease: "linear",
+                    ease: "linear" as const,
                 },
             },
         },
@@ -71,6 +86,18 @@ export default function LandingPage() {
             <main className="pt-24">
                 {/* Hero Section */}
                 <section className="relative min-h-[90vh] flex flex-col items-center justify-center px-4 overflow-hidden">
+                    {/* HNSW Graph Visualization Background */}
+                    <div className="absolute inset-0 z-0 opacity-30">
+                        <HNSWHeroCanvas
+                            layerCount={3}
+                            baseNodeCount={isMobile ? 30 : 50}
+                            animationSpeed={1.0}
+                            showTraversal={true}
+                            interactive={!isMobile}
+                            className="w-full h-full"
+                        />
+                    </div>
+                    
                     <motion.div
                         initial={{ opacity: 0, y: 100 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -127,84 +154,160 @@ export default function LandingPage() {
                 </div>
 
                 {/* Features Section */}
-                <section className="py-24 px-4 bg-blue-600 border-b-4 border-black">
-                    <div className="max-w-7xl mx-auto">
+                <section className="py-24 px-4 bg-blue-600 border-b-4 border-black relative overflow-hidden">
+                    {/* Graph Background Pattern with Parallax */}
+                    <GraphBackgroundPattern
+                        density="sparse"
+                        animated={true}
+                        parallaxIntensity={0.3}
+                        className="opacity-20"
+                    />
+                    
+                    <div className="max-w-7xl mx-auto relative z-10">
                         <h2 className="text-6xl font-black text-white mb-16 text-center transform -rotate-1" style={{ textShadow: '6px 6px 0px #000' }}>
                             POWERED BY AI
                         </h2>
 
                         <div className="grid md:grid-cols-3 gap-8">
-                            {/* Card 1 */}
-                            <div className="group bg-white p-8 border-4 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[6px] hover:translate-y-[6px] transition-all">
-                                <div className="w-16 h-16 bg-[#FF00D6] border-4 border-black flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                                    <Search className="w-8 h-8 text-white" />
+                            {/* Card 1 - Image Search */}
+                            <FeatureCardWithNodes
+                                icon={<Search className="w-8 h-8" />}
+                                title="Image Search"
+                                description="Natural language queries via CLIP ViT-B/32. Find 'sunset' without tags."
+                                accentColor="#FF00D6"
+                            >
+                                <div className="mt-4">
+                                    <div className="h-3 bg-black w-full mb-2 rounded"></div>
+                                    <div className="h-3 bg-gray-300 w-3/4 rounded"></div>
                                 </div>
-                                <h3 className="text-3xl font-black mb-4 uppercase">Image Search</h3>
-                                <p className="font-bold text-lg mb-6 border-l-4 border-black pl-4">
-                                    Natural language queries via CLIP ViT-B/32. Find "sunset" without tags.
-                                </p>
-                                <div className="h-4 bg-black w-full mb-2"></div>
-                                <div className="h-4 bg-gray-300 w-3/4"></div>
-                            </div>
+                            </FeatureCardWithNodes>
 
-                            {/* Card 2 */}
-                            <div className="group bg-white p-8 border-4 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[6px] hover:translate-y-[6px] transition-all relative top-8 md:top-0">
-                                <div className="w-16 h-16 bg-[#00F0FF] border-4 border-black flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                                    <Book className="w-8 h-8 text-black" />
+                            {/* Card 2 - Paper Search */}
+                            <FeatureCardWithNodes
+                                icon={<Book className="w-8 h-8" />}
+                                title="Paper Search"
+                                description="1M+ arXiv papers. Semantic matching with RoBERTa-large."
+                                accentColor="#00F0FF"
+                            >
+                                <div className="mt-4">
+                                    <div className="h-3 bg-black w-full mb-2 rounded"></div>
+                                    <div className="h-3 bg-gray-300 w-3/4 rounded"></div>
                                 </div>
-                                <h3 className="text-3xl font-black mb-4 uppercase">Paper Search</h3>
-                                <p className="font-bold text-lg mb-6 border-l-4 border-black pl-4">
-                                    1M+ arXiv papers. Semantic matching with RoBERTa-large.
-                                </p>
-                                <div className="h-4 bg-black w-full mb-2"></div>
-                                <div className="h-4 bg-gray-300 w-3/4"></div>
-                            </div>
+                            </FeatureCardWithNodes>
 
-                            {/* Card 3 */}
-                            <div className="group bg-white p-8 border-4 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[6px] hover:translate-y-[6px] transition-all">
-                                <div className="w-16 h-16 bg-yellow-400 border-4 border-black flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                                    <Activity className="w-8 h-8 text-black" />
+                            {/* Card 3 - Medical Scan */}
+                            <FeatureCardWithNodes
+                                icon={<Activity className="w-8 h-8" />}
+                                title="Medical Scan"
+                                description="Bone fracture detection using BiomedCLIP. Privacy-first analysis."
+                                accentColor="#FACC15"
+                            >
+                                <div className="mt-4">
+                                    <div className="h-3 bg-black w-full mb-2 rounded"></div>
+                                    <div className="h-3 bg-gray-300 w-3/4 rounded"></div>
                                 </div>
-                                <h3 className="text-3xl font-black mb-4 uppercase">Medical Scan</h3>
-                                <p className="font-bold text-lg mb-6 border-l-4 border-black pl-4">
-                                    Bone fracture detection using BiomedCLIP. Privacy-first analysis.
-                                </p>
-                                <div className="h-4 bg-black w-full mb-2"></div>
-                                <div className="h-4 bg-gray-300 w-3/4"></div>
-                            </div>
+                            </FeatureCardWithNodes>
                         </div>
                     </div>
                 </section>
 
-                {/* Team Section */}
+                {/* Team Section - Equal Cards with Avatars */}
                 <section className="py-24 px-4 bg-[#FFFDF5]">
-                    <div className="max-w-7xl mx-auto">
+                    <div className="max-w-6xl mx-auto">
                         <h2 className="text-6xl font-black text-black mb-16 text-center uppercase tracking-tight">
                             The Builders
                         </h2>
 
-                        <div className="grid md:grid-cols-3 gap-12">
-                            {[
-                                { name: "Huy Pham", role: "Full stack", bg: "bg-[#FF00D6]", github: "https://github.com/huyphamcs" },
-                                { name: "Nguyen Dinh Huy", role: "Backend & DevOps", bg: "bg-[#00F0FF]", github: "https://github.com/huynguyen6906" },
-                                { name: "Tran Quang Huy", role: "Platform Engineer", bg: "bg-yellow-400", github: "https://github.com/BofMeAstaroth" }
-                            ].map((member, i) => (
-                                <div key={i} className="flex flex-col">
-                                    <div className={`aspect-square ${member.bg} border-4 border-black mb-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden relative group`}>
-                                        <div className="absolute inset-0 flex items-center justify-center text-8xl font-black opacity-20 group-hover:scale-110 transition-transform">
-                                            {member.name[0]}
-                                        </div>
-                                    </div>
-                                    <h3 className="text-3xl font-black uppercase border-b-4 border-black pb-2 mb-2">{member.name}</h3>
-                                    <div className="flex justify-between items-center">
-                                        <span className="font-mono font-bold bg-black text-white px-2 py-1">{member.role}</span>
-                                        <div className="flex gap-2">
-                                            <Link href={member.github} className="p-2 border-2 border-black hover:bg-black hover:text-white transition-colors"><Github className="w-5 h-5" /></Link>
-                                            <Link href="#" className="p-2 border-2 border-black hover:bg-blue-600 hover:text-white transition-colors"><Linkedin className="w-5 h-5" /></Link>
-                                        </div>
+                        {/* 3 Equal Cards Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {/* Card 1 - Huy Pham */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5 }}
+                                className="bg-[#FF00D6] rounded-3xl p-6 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col"
+                            >
+                                {/* Avatar */}
+                                <div className="w-24 h-24 rounded-full border-4 border-black mb-4 overflow-hidden relative">
+                                    <Image
+                                        src="/anderson-avt.jpg"
+                                        alt="Huy Pham"
+                                        fill
+                                        className="object-cover"
+                                    />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="text-2xl font-black text-black mb-1">Huy Pham</h3>
+                                    <p className="text-black/80 font-bold text-sm mb-4">Full stack developer building the complete search experience.</p>
+                                </div>
+                                <div className="flex items-end justify-between mt-auto pt-4">
+                                    <span className="text-black/60 font-mono text-xs">FULL STACK</span>
+                                    <div className="flex gap-2">
+                                        <Link href="https://github.com/huyphamcs" target="_blank" className="w-9 h-9 bg-black rounded-full flex items-center justify-center hover:scale-110 transition-transform">
+                                            <Github className="w-4 h-4 text-white" />
+                                        </Link>
+                                        <Link href="#" className="w-9 h-9 bg-black rounded-full flex items-center justify-center hover:scale-110 transition-transform">
+                                            <Linkedin className="w-4 h-4 text-white" />
+                                        </Link>
                                     </div>
                                 </div>
-                            ))}
+                            </motion.div>
+
+                            {/* Card 2 - Nguyen Dinh Huy */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5, delay: 0.1 }}
+                                className="bg-[#00F0FF] rounded-3xl p-6 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col"
+                            >
+                                {/* Avatar */}
+                                <div className="w-24 h-24 bg-black/20 rounded-full border-4 border-black mb-4 flex items-center justify-center overflow-hidden">
+                                    <span className="text-4xl font-black text-black/40">NH</span>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="text-2xl font-black text-black mb-1">Nguyen Dinh Huy</h3>
+                                    <p className="text-black/80 font-bold text-sm mb-4">Backend systems & DevOps infrastructure.</p>
+                                </div>
+                                <div className="flex items-end justify-between mt-auto pt-4">
+                                    <span className="text-black/60 font-mono text-xs">BACKEND & DEVOPS</span>
+                                    <div className="flex gap-2">
+                                        <Link href="https://github.com/huynguyen6906" target="_blank" className="w-9 h-9 bg-black rounded-full flex items-center justify-center hover:scale-110 transition-transform">
+                                            <Github className="w-4 h-4 text-white" />
+                                        </Link>
+                                        <Link href="#" className="w-9 h-9 bg-black rounded-full flex items-center justify-center hover:scale-110 transition-transform">
+                                            <Linkedin className="w-4 h-4 text-white" />
+                                        </Link>
+                                    </div>
+                                </div>
+                            </motion.div>
+
+                            {/* Card 3 - Tran Quang Huy */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5, delay: 0.2 }}
+                                className="bg-[#FACC15] rounded-3xl p-6 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col"
+                            >
+                                {/* Avatar */}
+                                <div className="w-24 h-24 bg-black/20 rounded-full border-4 border-black mb-4 flex items-center justify-center overflow-hidden">
+                                    <span className="text-4xl font-black text-black/40">TH</span>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="text-2xl font-black text-black mb-1">Tran Quang Huy</h3>
+                                    <p className="text-black/80 font-bold text-sm mb-4">Platform engineering & system architecture.</p>
+                                </div>
+                                <div className="flex items-end justify-between mt-auto pt-4">
+                                    <span className="text-black/60 font-mono text-xs">PLATFORM ENGINEER</span>
+                                    <div className="flex gap-2">
+                                        <Link href="https://github.com/BofMeAstaroth" target="_blank" className="w-9 h-9 bg-black rounded-full flex items-center justify-center hover:scale-110 transition-transform">
+                                            <Github className="w-4 h-4 text-white" />
+                                        </Link>
+                                        <Link href="#" className="w-9 h-9 bg-black rounded-full flex items-center justify-center hover:scale-110 transition-transform">
+                                            <Linkedin className="w-4 h-4 text-white" />
+                                        </Link>
+                                    </div>
+                                </div>
+                            </motion.div>
                         </div>
                     </div>
                 </section>

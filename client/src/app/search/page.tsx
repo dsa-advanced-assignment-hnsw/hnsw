@@ -244,7 +244,9 @@ export default function Home() {
   const [medicalLoading, setMedicalLoading] = useState(false);
   const [medicalError, setMedicalError] = useState('');
   const [medicalSearched, setMedicalSearched] = useState(false);
+  const [medicalSearchType, setMedicalSearchType] = useState<'text' | 'image'>('text');
   const [uploadedMedicalImage, setUploadedMedicalImage] = useState<File | null>(null);
+  const [medicalImagePreview, setMedicalImagePreview] = useState<string | null>(null);
   const [medicalLastQuery, setMedicalLastQuery] = useState<{ type: 'text' | 'image', value: string }>({ type: 'text', value: '' });
   const [medicalCurrentPage, setMedicalCurrentPage] = useState(1);
   const [medicalImageDataCache, setMedicalImageDataCache] = useState<Map<string, string>>(new Map());
@@ -384,12 +386,10 @@ export default function Home() {
     }
   };
 
-  // Medical Search
-  const handleMedicalSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!medicalQuery.trim()) { setMedicalError('EMPTY QUERY'); return; }
+  // Medical Search - Text
+  const performMedicalTextSearch = async () => {
     setMedicalLoading(true); setMedicalError(''); setMedicalSearched(false);
-    setMedicalImageErrors(new Set()); // Reset errors on new search
+    setMedicalImageErrors(new Set());
     try {
       const apiUrl = process.env.NEXT_PUBLIC_MEDICAL_API_URL || 'http://localhost:5002';
       const res = await fetch(`${apiUrl}/search`, {
@@ -405,6 +405,42 @@ export default function Home() {
       setMedicalCurrentPage(1);
     } catch (err) { setMedicalError('FAILED. CHECK BACKEND 5002.'); }
     finally { setMedicalLoading(false); }
+  };
+
+  // Medical Search - Image
+  const performMedicalImageSearch = async () => {
+    if (!uploadedMedicalImage) return;
+    setMedicalLoading(true); setMedicalError(''); setMedicalSearched(false);
+    setMedicalImageErrors(new Set());
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_MEDICAL_API_URL || 'http://localhost:5002';
+      const fd = new FormData();
+      fd.append('image', uploadedMedicalImage);
+      fd.append('k', medicalK.toString());
+      const res = await fetch(`${apiUrl}/search/image`, {
+        method: 'POST',
+        body: fd,
+      });
+      if (!res.ok) throw new Error('Medical image search failed');
+      const data = await res.json();
+      setMedicalResults(data.results);
+      setMedicalSearched(true);
+      setMedicalLastQuery({ type: 'image', value: uploadedMedicalImage.name });
+      setMedicalCurrentPage(1);
+    } catch (err) { setMedicalError('IMAGE SEARCH FAILED. CHECK BACKEND 5002.'); }
+    finally { setMedicalLoading(false); }
+  };
+
+  const handleMedicalSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateK(medicalK, setMedicalKError)) { setMedicalError('INVALID COUNT'); return; }
+    if (medicalSearchType === 'text') {
+      if (!medicalQuery.trim()) { setMedicalError('EMPTY QUERY'); return; }
+      performMedicalTextSearch();
+    } else {
+      if (!uploadedMedicalImage) { setMedicalError('NO IMAGE'); return; }
+      performMedicalImageSearch();
+    }
   };
 
   // Image Loader Helpers (Reusing logic from original)
@@ -527,13 +563,13 @@ export default function Home() {
             </h1>
           </div>
           <div className="flex gap-2">
-            <div className="font-mono text-sm font-bold border-2 border-black px-2 py-1 bg-[#FFFDF5] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            {/* <div className="font-mono text-sm font-bold border-2 border-black px-2 py-1 bg-[#FFFDF5] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
               V2.0.0
-            </div>
-            <ModeToggle />
+            </div> */}
+            {/* <ModeToggle /> */}
           </div>
         </div>
-      </nav>
+      </nav>  
 
       <main className="max-w-7xl mx-auto px-4 py-12">
 
@@ -636,19 +672,63 @@ export default function Home() {
           {/* PAPER SEARCH UI */}
           {searchMode === 'paper' && (
             <div>
+              <div className="flex justify-center mb-8">
+                <div className="inline-flex border-4 border-black bg-white">
+                  <button
+                    onClick={() => setPaperSearchType('text')}
+                    className={`px-6 py-2 font-bold uppercase transition-colors ${paperSearchType === 'text' ? 'bg-black text-white' : 'hover:bg-gray-100'}`}
+                  >
+                    Text Query
+                  </button>
+                  <button
+                    onClick={() => setPaperSearchType('file')}
+                    className={`px-6 py-2 font-bold uppercase transition-colors border-l-4 border-black ${paperSearchType === 'file' ? 'bg-black text-white' : 'hover:bg-gray-100'}`}
+                  >
+                    Similar Paper
+                  </button>
+                </div>
+              </div>
+
               <form onSubmit={handlePaperSearch} className="max-w-4xl mx-auto flex flex-col gap-6">
                 <div className="flex flex-col md:flex-row gap-4">
-                  <input
-                    type="text"
-                    value={paperQuery}
-                    onChange={(e) => setPaperQuery(e.target.value)}
-                    className="flex-1 border-4 border-black p-4 font-bold text-xl placeholder:text-gray-400 focus:outline-none focus:ring-4 ring-cyan-400 bg-[#FFFDF5]"
-                    placeholder="PAPER TOPIC (E.G. 'ATTENTION IS ALL YOU NEED')..."
-                  />
+                  {paperSearchType === 'text' ? (
+                    <input
+                      type="text"
+                      value={paperQuery}
+                      onChange={(e) => setPaperQuery(e.target.value)}
+                      className="flex-1 border-4 border-black p-4 font-bold text-xl placeholder:text-gray-400 focus:outline-none focus:ring-4 ring-cyan-400 bg-[#FFFDF5]"
+                      placeholder="PAPER TOPIC (E.G. 'ATTENTION IS ALL YOU NEED')..."
+                    />
+                  ) : (
+                    <div className="flex-1 border-4 border-black border-dashed bg-gray-50 p-4 flex items-center justify-center relative cursor-pointer hover:bg-gray-100">
+                      <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => {
+                        if (e.target.files) {
+                          setUploadedFile(e.target.files[0]);
+                        }
+                      }} accept=".pdf,.txt" />
+                      {uploadedFile ? (
+                        <span className="font-bold flex items-center gap-2"><FileText className="w-6 h-6" /> {uploadedFile.name}</span>
+                      ) : (
+                        <span className="font-bold flex items-center gap-2 text-gray-500"><Upload /> UPLOAD PDF/TXT</span>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="w-32">
+                    <input
+                      type="number"
+                      value={paperK}
+                      onChange={(e) => handleKChange(e, setPaperK, setPaperKError)}
+                      className="w-full h-full border-4 border-black p-4 font-bold text-center bg-white"
+                      placeholder="K"
+                    />
+                  </div>
+
                   <button type="submit" disabled={paperLoading} className="border-4 border-black bg-[#00F0FF] px-8 py-4 font-black text-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_#000] transition-all disabled:opacity-50">
                     {paperLoading ? 'SCANNING...' : 'FIND'}
                   </button>
                 </div>
+                {paperError && <div className="bg-red-500 text-white font-bold p-2 text-center border-2 border-black shadow-[4px_4px_0px_0px_#000]">{paperError}</div>}
               </form>
             </div>
           )}
@@ -656,20 +736,66 @@ export default function Home() {
           {/* MEDICAL SEARCH UI */}
           {searchMode === 'medical' && (
             <div>
+              <div className="flex justify-center mb-8">
+                <div className="inline-flex border-4 border-black bg-white">
+                  <button
+                    onClick={() => setMedicalSearchType('text')}
+                    className={`px-6 py-2 font-bold uppercase transition-colors ${medicalSearchType === 'text' ? 'bg-black text-white' : 'hover:bg-gray-100'}`}
+                  >
+                    Text Query
+                  </button>
+                  <button
+                    onClick={() => setMedicalSearchType('image')}
+                    className={`px-6 py-2 font-bold uppercase transition-colors border-l-4 border-black ${medicalSearchType === 'image' ? 'bg-black text-white' : 'hover:bg-gray-100'}`}
+                  >
+                    Similar Scan
+                  </button>
+                </div>
+              </div>
+
               <form onSubmit={handleMedicalSearch} className="max-w-4xl mx-auto flex flex-col gap-6">
                 <div className="flex flex-col md:flex-row gap-4">
-                  <input
-                    type="text"
-                    value={medicalQuery}
-                    onChange={(e) => setMedicalQuery(e.target.value)}
-                    className="flex-1 border-4 border-black p-4 font-bold text-xl placeholder:text-gray-400 focus:outline-none focus:ring-4 ring-yellow-400 bg-[#FFFDF5]"
-                    placeholder="CONDITION (E.G. 'FRACTURE')..."
-                  />
+                  {medicalSearchType === 'text' ? (
+                    <input
+                      type="text"
+                      value={medicalQuery}
+                      onChange={(e) => setMedicalQuery(e.target.value)}
+                      className="flex-1 border-4 border-black p-4 font-bold text-xl placeholder:text-gray-400 focus:outline-none focus:ring-4 ring-yellow-400 bg-[#FFFDF5]"
+                      placeholder="CONDITION (E.G. 'FRACTURE')..."
+                    />
+                  ) : (
+                    <div className="flex-1 border-4 border-black border-dashed bg-gray-50 p-4 flex items-center justify-center relative cursor-pointer hover:bg-gray-100">
+                      <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => {
+                        if (e.target.files) {
+                          setUploadedMedicalImage(e.target.files[0]);
+                          const reader = new FileReader();
+                          reader.onload = (ev) => setMedicalImagePreview(ev.target?.result as string);
+                          reader.readAsDataURL(e.target.files[0]);
+                        }
+                      }} accept="image/*" />
+                      {medicalImagePreview ? (
+                        <img src={medicalImagePreview} alt="Preview" className="h-16 w-16 object-cover border-2 border-black" />
+                      ) : (
+                        <span className="font-bold flex items-center gap-2 text-gray-500"><Upload /> UPLOAD SCAN IMAGE</span>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="w-32">
+                    <input
+                      type="number"
+                      value={medicalK}
+                      onChange={(e) => handleKChange(e, setMedicalK, setMedicalKError)}
+                      className="w-full h-full border-4 border-black p-4 font-bold text-center bg-white"
+                      placeholder="K"
+                    />
+                  </div>
+
                   <button type="submit" disabled={medicalLoading} className="border-4 border-black bg-yellow-400 px-8 py-4 font-black text-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_#000] transition-all disabled:opacity-50">
                     {medicalLoading ? 'ANALYZING...' : 'DIAGNOSE'}
                   </button>
                 </div>
-                {medicalError && <div className="bg-red-500 text-white font-bold p-2 text-center border-2 border-black">{medicalError}</div>}
+                {medicalError && <div className="bg-red-500 text-white font-bold p-2 text-center border-2 border-black shadow-[4px_4px_0px_0px_#000]">{medicalError}</div>}
               </form>
             </div>
           )}
