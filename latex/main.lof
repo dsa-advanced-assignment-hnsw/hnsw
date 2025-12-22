@@ -1,0 +1,18 @@
+\babel@toc {vietnamese}{}\relax 
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Biểu diễn đồ thị của cấu trúc NSW \cite {malkov2014approximate}}}{11}{figure.caption.5}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Một PSL với 8 phần tử, mục tiêu cần tìm là phần tử thứ 6 \cite {papadakis1993skip}}}{13}{figure.caption.6}%
+\contentsline {figure}{\numberline {2.3}{\ignorespaces Minh họa cho ý tưởng HNSW \cite {malkov2018efficient}}}{13}{figure.caption.7}%
+\contentsline {figure}{\numberline {2.4}{\ignorespaces Minh họa cho các buckets trong thuật toán LSH \cite {chakraborty2020conlsh}}}{18}{figure.caption.8}%
+\contentsline {figure}{\numberline {2.5}{\ignorespaces Minh họa khởi tạo một vp-tree \cite {vptree}}}{19}{figure.caption.9}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Biểu đồ so sánh độ trễ giữa HNSW và Brute-force}}{27}{figure.caption.12}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Biểu đồ so sánh độ chính xác Recall@K của HNSW}}{28}{figure.caption.14}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Ảnh hưởng của các tham số đến độ chính xác Recall@1 (HNSWLib)}}{29}{figure.caption.15}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Ảnh hưởng của các tham số đến độ trễ khi truy vấn của thuật toán (HNSWLib)}}{29}{figure.caption.16}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Thống kê cáu trúc đồ thị HNSW mô phỏng}}{31}{figure.caption.17}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsfinish 

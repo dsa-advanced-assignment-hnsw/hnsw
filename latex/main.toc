@@ -1,0 +1,79 @@
+\babel@toc {vietnamese}{}\relax 
+\contentsline {chapter}{Tóm tắt}{4}{chapter*.2}%
+\contentsline {chapter}{\numberline {1}Mở đầu}{7}{chapter.1}%
+\contentsline {section}{\numberline {I}Bối cảnh}{7}{section.1.1}%
+\contentsline {section}{\numberline {II}Mục tiêu}{7}{section.1.2}%
+\contentsline {section}{\numberline {III}Yêu cầu kỹ thuật}{7}{section.1.3}%
+\contentsline {chapter}{\numberline {2}Cơ sở lý thuyết}{9}{chapter.2}%
+\contentsline {section}{\numberline {I}Các vấn đề nền tảng}{9}{section.2.1}%
+\contentsline {section}{\numberline {II}Thuật toán tìm kiếm dựa trên đồ thị HNSW}{10}{section.2.2}%
+\contentsline {subsection}{\numberline {1}NSW (Navigable Small World) và giải thuật tham lam (greedy algorithm)}{10}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2}HNSW (Hierarchical Navigable Small World) và đồ thị phân tầng}{12}{subsection.2.2.2}%
+\contentsline {subsubsection}{\numberline {a}Đồ thị phân tầng - nền tảng của HNSW}{12}{subsubsection.2.2.2.1}%
+\contentsline {subsubsection}{\numberline {b}Các thuật toán trên đồ thị HNSW}{14}{subsubsection.2.2.2.2}%
+\contentsline {section}{\numberline {III}Các chiến lược ANN khác}{18}{section.2.3}%
+\contentsline {subsection}{\numberline {1}So sánh độ phức tạp thời gian}{19}{subsection.2.3.1}%
+\contentsline {section}{\numberline {IV}Ứng dụng của đồ thị HNSW trong các hệ thống truy vấn vector}{19}{section.2.4}%
+\contentsline {chapter}{\numberline {3}Thiết kế và triển khai hệ thống}{21}{chapter.3}%
+\contentsline {section}{\numberline {I}Kiến trúc hệ thống}{21}{section.3.1}%
+\contentsline {subsection}{\numberline {1}Thành phần Frontend}{21}{subsection.3.1.1}%
+\contentsline {subsection}{\numberline {2}Thành phần Backend}{21}{subsection.3.1.2}%
+\contentsline {subsubsection}{\numberline {a}Image Search Service (\url {https://huynguyen6906-image-server.hf.space/})}{21}{subsubsection.3.1.2.1}%
+\contentsline {subsubsection}{\numberline {b}Paper Search Service (\url {https://huynguyen6906-paper-server.hf.space/})}{22}{subsubsection.3.1.2.2}%
+\contentsline {subsubsection}{\numberline {c}Medical Search Service (\url {https://huynguyen6906-medical-server.hf.space/})}{22}{subsubsection.3.1.2.3}%
+\contentsline {section}{\numberline {II}Mô tả dữ liệu}{22}{section.3.2}%
+\contentsline {subsection}{\numberline {1}Dataset hình ảnh}{22}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {2}Dataset tài liệu}{22}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3}Dataset hình ảnh y tế}{22}{subsection.3.2.3}%
+\contentsline {section}{\numberline {III}Chi tiết triển khai}{23}{section.3.3}%
+\contentsline {subsection}{\numberline {1}Tích hợp hnswlib}{23}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {2}Cấu trúc lưu trữ HDF5}{23}{subsection.3.3.2}%
+\contentsline {subsection}{\numberline {3}API Endpoints}{23}{subsection.3.3.3}%
+\contentsline {subsubsection}{\numberline {a}Image Search API}{24}{subsubsection.3.3.3.1}%
+\contentsline {subsubsection}{\numberline {b}Paper Search API}{24}{subsubsection.3.3.3.2}%
+\contentsline {subsubsection}{\numberline {c}Medical Search API}{24}{subsubsection.3.3.3.3}%
+\contentsline {subsection}{\numberline {4}Triển khai Brute-force Baseline}{24}{subsection.3.3.4}%
+\contentsline {section}{\numberline {IV}Quy trình xử lý}{24}{section.3.4}%
+\contentsline {subsection}{\numberline {1}Quy trình tìm kiếm}{24}{subsection.3.4.1}%
+\contentsline {subsection}{\numberline {2}Quy trình xây dựng chỉ mục}{25}{subsection.3.4.2}%
+\contentsline {chapter}{\numberline {4}Đánh giá hiệu suất}{26}{chapter.4}%
+\contentsline {section}{\numberline {I}Phương pháp đánh giá}{26}{section.4.1}%
+\contentsline {subsection}{\numberline {1}Cấu hình phần cứng và môi trường}{26}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {2}Cấu hình thí nghiệm}{26}{subsection.4.1.2}%
+\contentsline {subsection}{\numberline {3}Các phương pháp và triển khai được đánh giá}{26}{subsection.4.1.3}%
+\contentsline {section}{\numberline {II}Các chỉ số đánh giá}{27}{section.4.2}%
+\contentsline {subsection}{\numberline {1}Độ trễ (Latency)}{27}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {2}Độ chính xác (Accuracy)}{28}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {3}Ảnh huởng của các thành phần đến độ chính xác và độ trễ}{29}{subsection.4.2.3}%
+\contentsline {subsubsection}{\numberline {a}Phân tích độ chính xác (Accuracy Analysis)}{30}{subsubsection.4.2.3.1}%
+\contentsline {subsubsection}{\numberline {b}Phân tích tốc độ tìm kiếm (Latency Analysis)}{30}{subsubsection.4.2.3.2}%
+\contentsline {subsubsection}{\numberline {c}Kết luận về sự đánh đổi (Trade-off Conclusion)}{30}{subsubsection.4.2.3.3}%
+\contentsline {subsection}{\numberline {4}Phân tích cấu trúc đồ thị HNSW mô phỏng}{31}{subsection.4.2.4}%
+\contentsline {subsubsection}{\numberline {a}Phân cấp số lượng tầng}{31}{subsubsection.4.2.4.1}%
+\contentsline {subsubsection}{\numberline {b}Độ kết nối và bậc trung bình}{31}{subsubsection.4.2.4.2}%
+\contentsline {subsubsection}{\numberline {c}Điểm vào (Entry Point)}{32}{subsubsection.4.2.4.3}%
+\contentsline {section}{\numberline {III}Điều chỉnh tham số}{32}{section.4.3}%
+\contentsline {subsection}{\numberline {1}Ảnh hưởng của tham số M}{32}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {2}Ảnh hưởng của efConstruction}{32}{subsection.4.3.2}%
+\contentsline {subsection}{\numberline {3}Ảnh hưởng của efSearch}{32}{subsection.4.3.3}%
+\contentsline {section}{\numberline {IV}So sánh với các phương pháp khác}{32}{section.4.4}%
+\contentsline {subsection}{\numberline {1}So sánh với LSH}{32}{subsection.4.4.1}%
+\contentsline {subsection}{\numberline {2}So sánh với VP-Tree}{33}{subsection.4.4.2}%
+\contentsline {chapter}{\numberline {5}Trực quan hóa}{34}{chapter.5}%
+\contentsline {chapter}{\numberline {6}Kết luận}{35}{chapter.6}%
+\contentsline {section}{\numberline {I}Tính khả thi cho ứng dụng thực tế}{35}{section.6.1}%
+\contentsline {subsection}{\numberline {1}Ưu điểm}{35}{subsection.6.1.1}%
+\contentsline {subsection}{\numberline {2}Ứng dụng thực tế}{35}{subsection.6.1.2}%
+\contentsline {section}{\numberline {II}Hạn chế}{35}{section.6.2}%
+\contentsline {subsection}{\numberline {1}Hạn chế về bộ nhớ}{35}{subsection.6.2.1}%
+\contentsline {subsection}{\numberline {2}Độ nhạy với tham số}{36}{subsection.6.2.2}%
+\contentsline {subsection}{\numberline {3}Thời gian xây dựng chỉ mục}{36}{subsection.6.2.3}%
+\contentsline {subsection}{\numberline {4}Hạn chế về cập nhật động}{36}{subsection.6.2.4}%
+\contentsline {section}{\numberline {III}Khuyến nghị cho tương lai}{36}{section.6.3}%
+\contentsline {subsection}{\numberline {1}Tối ưu hóa hiệu suất}{36}{subsection.6.3.1}%
+\contentsline {subsection}{\numberline {2}Mở rộng quy mô}{36}{subsection.6.3.2}%
+\contentsline {subsection}{\numberline {3}Cải thiện độ chính xác}{37}{subsection.6.3.3}%
+\contentsline {subsection}{\numberline {4}Cập nhật động}{37}{subsection.6.3.4}%
+\contentsline {subsection}{\numberline {5}Ứng dụng mở rộng}{37}{subsection.6.3.5}%
+\contentsline {section}{\numberline {IV}Tổng kết}{37}{section.6.4}%
+\contentsfinish 
