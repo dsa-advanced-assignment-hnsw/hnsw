@@ -20,7 +20,7 @@ Các thí nghiệm được thực hiện trên nền tảng đám mây Google C
     \item \textbf{Số chiều}: 128 (cho thí nghiệm benchmark)
     \item \textbf{Số truy vấn}: 100
     \item \textbf{Giá trị K}: [1, 5, 10, 20, 50, 100]
-    \item \textbf{Cấu hình HNSW}: M=40, efConstruction=200, ef=100
+    \item \textbf{Cấu hình HNSW}: M=40, efConstruction=200, efSearch=100
 \end{itemize}
 
 \subsection{Các phương pháp và triển khai được đánh giá}
@@ -224,5 +224,4 @@ Vantage Point Tree là phương pháp ANN dựa trên cây. So sánh:
     \item \textbf{Bộ nhớ}: VP-Tree tiết kiệm bộ nhớ hơn
     \item \textbf{Khả năng mở rộng}: HNSW mở rộng tốt hơn cho dữ liệu lớn
 \end{itemize}
-
 

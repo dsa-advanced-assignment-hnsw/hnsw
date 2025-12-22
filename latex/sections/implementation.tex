@@ -2,14 +2,7 @@
 
 \section{Kiến trúc hệ thống}
 
-Hệ thống tìm kiếm đa phương thức được thiết kế theo kiến trúc client-server với ba dịch vụ backend độc lập và một frontend thống nhất. \Cref{fig:system_architecture} mô tả kiến trúc tổng thể của hệ thống.
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.9\textwidth]{images/system_architecture.png}
-    \caption{Kiến trúc hệ thống tìm kiếm đa phương thức sử dụng HNSW}
-    \label{fig:system_architecture}
-\end{figure}
+Hệ thống tìm kiếm đa phương thức được thiết kế theo kiến trúc client-server với ba dịch vụ backend độc lập và một frontend thống nhất.
 
 \subsection{Thành phần Frontend}
 Frontend được xây dựng bằng Next.js 15 với TypeScript, cung cấp giao diện web thống nhất cho cả ba loại tìm kiếm:
@@ -21,38 +14,38 @@ Frontend được xây dựng bằng Next.js 15 với TypeScript, cung cấp gia
 
 Frontend giao tiếp với các backend service thông qua REST API, với các endpoint:
 \begin{itemize}
-    \item Image Search API: \texttt{http://localhost:5000}
-    \item Paper Search API: \texttt{http://localhost:5001}
-    \item Medical Search API: \texttt{http://localhost:5002}
+    \item Image Search API: \url{https://huynguyen6906-image-server.hf.space/}
+    \item Paper Search API: \url{https://huynguyen6906-paper-server.hf.space/}
+    \item Medical Search API: \url{https://huynguyen6906-medical-server.hf.space/}
 \end{itemize}
 
 \subsection{Thành phần Backend}
 Backend được triển khai bằng Flask (Python) với ba dịch vụ độc lập:
 
-\subsubsection{Image Search Service (Port 5000)}
+\subsubsection{Image Search Service (\url{https://huynguyen6906-image-server.hf.space/})}
 \begin{itemize}
     \item \textbf{Mô hình}: OpenAI CLIP (ViT-B/32)
     \item \textbf{Embedding dimension}: 512
-    \item \textbf{Dataset}: Open Images V7, 100,000+ hình ảnh
-    \item \textbf{Storage}: HDF5 file (\texttt{Images\_Embedbed\_0-100000.h5})
+    \item \textbf{Dataset}: Open Images V7, 1.502.477 hình ảnh
+    \item \textbf{Storage}: HDF5 file (\texttt{Image\_Embedded.h5})
     \item \textbf{Features}: Hỗ trợ hình ảnh từ nhiều nguồn (Flickr, Pinterest, Google Images)
 \end{itemize}
 
-\subsubsection{Paper Search Service (Port 5001)}
+\subsubsection{Paper Search Service (\url{https://huynguyen6906-paper-server.hf.space/})}
 \begin{itemize}
     \item \textbf{Mô hình}: Sentence Transformers (all-roberta-large-v1)
     \item \textbf{Embedding dimension}: 1024
-    \item \textbf{Dataset}: arXiv papers, 100,000+ tài liệu
+    \item \textbf{Dataset}: arXiv papers, 1.000.000 tài liệu
     \item \textbf{Storage}: HDF5 file (\texttt{Papers\_Embedbed\_0-100000.h5})
     \item \textbf{Features}: Tìm kiếm bằng văn bản hoặc tải lên file PDF/TXT
 \end{itemize}
 
-\subsubsection{Medical Search Service (Port 5002)}
+\subsubsection{Medical Search Service (\url{https://huynguyen6906-medical-server.hf.space/})}
 \begin{itemize}
     \item \textbf{Mô hình}: BiomedCLIP (microsoft/BiomedCLIP-PubMedBERT\_256-vit\_base\_patch16\_224)
     \item \textbf{Embedding dimension}: 512
-    \item \textbf{Dataset}: FracAtlas bone fractures, 3,400+ hình ảnh X-quang
-    \item \textbf{Storage}: HDF5 file (\texttt{Medical\_Fractures\_Embedded.h5})
+    \item \textbf{Dataset}: FracAtlas bone fractures, 3.366 hình ảnh X-quang
+    \item \textbf{Storage}: HDF5 file (\texttt{Medical\_Embedded.h5})
     \item \textbf{Features}: Tìm kiếm bằng thuật ngữ y tế hoặc tải lên hình ảnh X-quang
 \end{itemize}
 
@@ -73,7 +66,7 @@ Dataset hình ảnh y tế bao gồm 3,400 hình ảnh X-quang gãy xương từ
 Hệ thống sử dụng thư viện hnswlib, một thư viện C++ được tối ưu hóa cao với Python bindings. Cấu hình HNSW được tối ưu cho từng loại dữ liệu:
 
 \begin{itemize}
-    \item \textbf{M (số kết nối tối đa)}: 200 - Đảm bảo độ chính xác cao
+    \item \textbf{M (số kết nối tối đa)}: 20 - Đảm bảo độ chính xác cao
     \item \textbf{efConstruction}: 400 - Số lượng láng giềng xem xét khi xây dựng đồ thị
     \item \textbf{efSearch}: 200 - Số lượng láng giềng xem xét khi tìm kiếm
     \item \textbf{Space}: cosine - Sử dụng cosine similarity cho tất cả các loại embedding
@@ -100,7 +93,7 @@ HDF5 được chọn vì:
     \item Hỗ trợ nén dữ liệu hiệu quả (gzip level 9)
     \item Truy cập nhanh với khả năng đọc một phần dữ liệu
     \item Tương thích tốt với Python (h5py)
-    \item Kích thước file nhỏ: ~5MB cho 100K hình ảnh, ~4GB cho 1M tài liệu
+    \item Kích thước file nhỏ: ~3GB cho 1,5M hình ảnh (đã chuyển đổi thành vector 512 chiều), ~4GB cho 1M tài liệu (đã chuyển đổi thành vector 1024 chiều).
 \end{itemize}
 
 \subsection{API Endpoints}
@@ -151,5 +144,4 @@ Mỗi backend service cung cấp các endpoint REST API:
     \item \textbf{Xây dựng HNSW}: Sử dụng hnswlib để xây dựng đồ thị HNSW từ các vector
     \item \textbf{Lưu chỉ mục}: Lưu đồ thị HNSW vào file .bin để tải nhanh khi khởi động
 \end{enumerate}
-
 

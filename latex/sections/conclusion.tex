@@ -6,7 +6,7 @@ Kết quả nghiên cứu cho thấy HNSW là một giải pháp rất khả thi
 
 \subsection{Ưu điểm}
 \begin{itemize}
-    \item \textbf{Tốc độ cao}: HNSW nhanh hơn brute-force từ 20-30 lần, đạt độ trễ dưới 100µs
+    \item \textbf{Tốc độ cao}: HNSW nhanh hơn brute-force, đạt độ trễ dưới 1ms
     \item \textbf{Độ chính xác tốt}: Recall@10 đạt trên 80\%, đủ cho hầu hết các ứng dụng
     \item \textbf{Khả năng mở rộng}: Có thể xử lý hàng triệu vector với độ phức tạp $O(\log N)$
     \item \textbf{Đa phương thức}: Hỗ trợ nhiều loại dữ liệu (hình ảnh, văn bản, y tế)
@@ -16,9 +16,9 @@ Kết quả nghiên cứu cho thấy HNSW là một giải pháp rất khả thi
 \subsection{Ứng dụng thực tế}
 Hệ thống đã được triển khai thành công với ba dịch vụ:
 \begin{itemize}
-    \item \textbf{Tìm kiếm hình ảnh}: 100,000+ hình ảnh từ Open Images V7
-    \item \textbf{Tìm kiếm tài liệu}: 100,000+ bài báo khoa học từ arXiv
-    \item \textbf{Tìm kiếm y tế}: 3,400+ hình ảnh X-quang gãy xương
+    \item \textbf{Tìm kiếm hình ảnh}: 1,500,000+ hình ảnh từ Open Images V7
+    \item \textbf{Tìm kiếm tài liệu}: 1,000,000+ bài báo khoa học từ arXiv
+    \item \textbf{Tìm kiếm y tế}: 3,300+ hình ảnh X-quang gãy xương
 \end{itemize}
 
 Tất cả các dịch vụ đều hoạt động ổn định với API RESTful và giao diện web thân thiện.
@@ -104,5 +104,4 @@ Nghiên cứu này đã thành công trong việc triển khai và đánh giá h
 Hệ thống đã được triển khai thành công với ba dịch vụ backend độc lập và một frontend thống nhất, chứng minh tính khả thi cho ứng dụng production. Với các cải tiến được đề xuất, hệ thống có thể được mở rộng để xử lý hàng triệu vector và phục vụ nhiều người dùng đồng thời.
 
 Nghiên cứu này cung cấp nền tảng vững chắc cho việc phát triển các ứng dụng tìm kiếm vector trong tương lai, và mở ra nhiều hướng nghiên cứu thú vị về tối ưu hóa hiệu suất, mở rộng quy mô và cải thiện độ chính xác.
-
 
