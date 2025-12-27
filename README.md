@@ -382,7 +382,7 @@ dsa-advanced-assignment-hnsw/
 
 | Metric | Image Search | Paper Search | Medical Search |
 |--------|--------------|--------------|----------------|
-| **Index Size** | 1,000 images | 100K-1M papers | ~3,400 X-rays |
+| **Index Size** | 1,5M images | 100K-1M papers | ~3,400 X-rays |
 | **Query Time** | < 100ms | < 200ms | < 50ms |
 | **Embedding Dim** | 512 | 1024 | 512 |
 | **Storage (HDF5)** | ~5MB | ~4GB (1M) | ~19MB |
