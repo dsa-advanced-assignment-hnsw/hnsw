@@ -149,9 +149,20 @@ export default function VisualizationPage() {
                     break;
 
                 case 'init_search_layer':
+                    // Update the current layer context for search
+                    if (currentNode) {
+                        setCurrentNode({ id: currentNode.id, layer: log.layer });
+                    } else if (log.ep !== undefined) {
+                        setCurrentNode({ id: log.ep, layer: log.layer });
+                    }
+                    await sleep(waitTime);
+                    break;
+
                 case 'construction_layer':
-                    // Do NOT clear paths here to allow full route persistence
-                    // setInsertSearchPath([]); 
+                    // Update layer context for construction
+                    if (currentNode) {
+                        setCurrentNode({ id: currentNode.id, layer: log.level });
+                    }
                     await sleep(waitTime);
                     break;
 
