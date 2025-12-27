@@ -9,3 +9,4 @@ Phương pháp đánh giá bao gồm so sánh hiệu suất giữa HNSW và brut
 
 Nghiên cứu cũng phân tích ảnh hưởng của các tham số HNSW (M, efConstruction, efSearch) đến hiệu suất và độ chính xác. Kết quả cho thấy với cấu hình tối ưu (M=200, efConstruction=400, ef=200), hệ thống có thể mở rộng đến hàng triệu vector với độ phức tạp thời gian $O(\log N)$ cho truy vấn và $O(N \log N)$ cho việc xây dựng chỉ mục. Hệ thống đã được triển khai thành công với ba dịch vụ backend độc lập (tìm kiếm hình ảnh, tài liệu, và y tế) và giao diện frontend thống nhất, chứng minh tính khả thi cho ứng dụng thực tế.
 
+
