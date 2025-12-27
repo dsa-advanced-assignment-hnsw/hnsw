@@ -1,198 +1,125 @@
-<div align="center">
+# HNSW Semantic Search Engine
 
-# 🔍 HNSW Semantic Search Engine
+A powerful multi-modal semantic search engine for images, papers, and medical diagnostics using HNSW (Hierarchical Navigable Small World) algorithm.
 
-<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=22&duration=3000&pause=1000&color=6366F1&center=true&vCenter=true&width=600&lines=Search+Images+with+Natural+Language;Find+Research+Papers+Instantly;Diagnose+Bone+Fractures+with+AI;CLIP+%2B+OpenCLIP+%2B+HNSW" alt="Typing SVG" />
+**Technologies:** Python 3.10+ | PyTorch 2.0+ | Next.js 16 | Flask 3.0 | TypeScript 5.0+
 
-<p align="center">
-  <strong>A powerful multi-modal semantic search engine for images, papers, and medical diagnostics</strong>
-</p>
+**License:** MIT | **Status:** Maintained
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
-  <img src="https://img.shields.io/badge/PyTorch-2.0+-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white" alt="PyTorch" />
-  <img src="https://img.shields.io/badge/Next.js-15-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js" />
-  <img src="https://img.shields.io/badge/Flask-3.0-000000?style=for-the-badge&logo=flask&logoColor=white" alt="Flask" />
-  <img src="https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
-</p>
+## Features
 
-<p align="center">
-  <img src="https://img.shields.io/badge/License-MIT-green.svg?style=flat-square" alt="License" />
-  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square" alt="PRs Welcome" />
-  <img src="https://img.shields.io/badge/Maintained-Yes-green.svg?style=flat-square" alt="Maintained" />
-</p>
+### Image Search
+- **Natural Language Search**: Search images using plain English queries
+- **Image-to-Image Search**: Upload an image to find similar ones
+- **CLIP Embeddings**: State-of-the-art vision-language AI model (ViT-B/32)
+- **Multi-Source Support**: 1000+ images from Flickr, Pinterest, Google, Meta, Reddit
+- **Fast Retrieval**: HNSW algorithm for sub-100ms search times
+- **LRU Caching**: Intelligent image caching for improved performance
 
----
+### Paper Search
+- **Semantic Paper Search**: Search 100K-1M arXiv papers semantically
+- **Document Upload**: Upload PDF/TXT/MD files to find similar papers
+- **High-Quality Embeddings**: Sentence Transformers (all-roberta-large-v1, 1024-dim)
+- **Comprehensive Coverage**: Full arXiv metadata indexed
+- **Fast Retrieval**: Sub-200ms search across millions of papers
 
-### 🎯 **[Documentation](./) | [API Docs](./backend/README.md)**
+### Medical Search
+- **Bone Fracture Search**: Search X-ray images by medical terms
+- **BiomedCLIP Model**: Specialized medical vision-language AI (512-dim)
+- **Local Secure Storage**: Privacy-first local image serving
+- **Clinical Accuracy**: Finds similar fracture patterns instantly
+- **Efficient Indexing**: ~19MB storage for 3,300+ X-rays
 
-</div>
+### UI Features
+- Modern responsive design with dark/light mode
+- Real-time similarity scores
+- Smart image caching
+- Drag-and-drop file upload
+- Mobile-friendly interface
 
----
+## Architecture
 
-## ✨ Features
+The system consists of three main layers:
 
-<table>
-<tr>
-<td width="33%">
+### Frontend Layer (Next.js + TypeScript)
+- React 19 components with TypeScript
+- Custom hooks for search, image upload, and data management
+- Responsive UI with Tailwind CSS
+- Dark/light theme support
+- Client-side image caching
 
-### 🖼️ Image Search
-- 🔍 **Natural Language Search**
-  Search images using plain English
-- 🖼️ **Image-to-Image Search**
-  Upload an image, find similar ones
-- 🤖 **CLIP Embeddings**
-  State-of-the-art vision-language AI
-- 🌐 **Multi-Source Support**
-  1000+ images from Flickr, Pinterest, Google
-- ⚡ **Lightning Fast**
-  HNSW algorithm for instant results
+### Backend Layer (Flask)
+Three separate Flask servers for different search types:
+- **Image Search v1** (`server.py`): Local images, base64 serving
+- **Image Search v2** (`server_v2.py`): Online images, LRU caching, image proxy
+- **Paper Search** (`server_paper.py`): arXiv papers, document upload support
+- **Medical Search** (`server_medical.py`): X-ray images, local secure serving
+- **Unified Backend** (`app.py`): Modular architecture with shared core components
 
-</td>
-<td width="33%">
+### ML & Storage Layer
+**Models:**
+- CLIP ViT-B/32 (512-dim) for image search
+- Sentence Transformers all-roberta-large-v1 (1024-dim) for paper search
+- BiomedCLIP (512-dim) for medical image search
 
-### 📚 Paper Search
-- 📄 **Semantic Paper Search**
-  Search 1M+ arXiv papers semantically
-- 📝 **Document Upload**
-  Upload PDF/TXT to find similar papers
-- 🔬 **High-Quality Embeddings**
-  Sentence Transformers (RoBERTa-large)
-- 🎓 **Comprehensive Coverage**
-  Full arXiv metadata indexed
-- 🚀 **Fast Retrieval**
-  Sub-second search across millions
+**Storage:**
+- HDF5 files for pre-computed embeddings
+- HNSW binary indexes for fast retrieval
+- Local filesystem for medical images
+- LRU cache for online images
 
-</td>
-<td width="33%">
+## Quick Start
 
-### 🏥 Medical Search (NEW)
-- 🦴 **Bone Fracture Search**
-  Search X-ray images by medical terms
-- 🔬 **BiomedCLIP Model**
-  Specialized medical vision-language AI
-- 🏥 **Local Secure Storage**
-  Privacy-first local image serving
-- 📊 **Clinical Accuracy**
-  Finds similar fracture patterns instantly
-- ⚡ **Efficient Indexing**
-  ~19MB storage for 3,300+ X-rays
+### Prerequisites
+- Python 3.10 or higher
+- Node.js 18 or higher
+- Conda (recommended) or venv
+- Pre-computed embedding files (HDF5 format)
 
-</td>
-</tr>
-</table>
+### Backend Setup
 
-<div align="center">
-
-### 🎨 **Modern UI** • 🌓 **Dark Mode** • 📱 **Responsive Design** • 📊 **Similarity Scores** • 💾 **Smart Caching**
-
-</div>
-
----
-
-## 🏗️ Architecture
-
-```mermaid
-graph TB
-    subgraph Frontend["🎨 Frontend (Next.js + TypeScript)"]
-        UI[React Components]
-        State[State Management]
-        API[API Client]
-    end
-
-    subgraph Backend["⚙️ Backend Services (Flask)"]
-        ImgV1[Image Search v1<br/>Local Images<br/>Port 5000]
-        ImgV2[Image Search v2<br/>Online Images<br/>Port 5000]
-        Paper[Paper Search<br/>arXiv Papers<br/>Port 5001]
-        Medical[Medical Search<br/>Bone Fractures<br/>Port 5002]
-    end
-
-    subgraph ML["🤖 ML Models"]
-        CLIP[CLIP ViT-B/32<br/>512-dim]
-        ST[Sentence Transformers<br/>1024-dim]
-        BiomedCLIP[BiomedCLIP<br/>512-dim<br/>Medical Domain]
-    end
-
-    subgraph Storage["💾 Data Storage"]
-        HDF5_Img[images_embeds.h5<br/>~1000 images]
-        HDF5_Paper[Papers_Embedbed.h5<br/>~1M papers]
-        HDF5_Medical[Medical_Fractures.h5<br/>~3.3K X-rays]
-        HNSW_Img[HNSW Index .bin<br/>Fast Retrieval]
-        HNSW_Paper[HNSW Index .bin<br/>Fast Retrieval]
-        HNSW_Medical[HNSW Index .bin<br/>Fast Retrieval]
-        LocalFS[Local Filesystem<br/>Image Storage]
-    end
-
-    UI --> API
-    API --> ImgV1
-    API --> ImgV2
-    API --> Paper
-    API --> Medical
-
-    ImgV1 --> CLIP
-    ImgV2 --> CLIP
-    Paper --> ST
-    Medical --> BiomedCLIP
-
-    CLIP --> HDF5_Img
-    ST --> HDF5_Paper
-    BiomedCLIP --> HDF5_Medical
-
-    HDF5_Img --> HNSW_Img
-    HDF5_Paper --> HNSW_Paper
-    HDF5_Medical --> HNSW_Medical
-    
-    Medical --> LocalFS
-
-    style Frontend fill:#6366f1,stroke:#4f46e5,stroke-width:2px,color:#fff
-    style Backend fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff
-    style ML fill:#ec4899,stroke:#db2777,stroke-width:2px,color:#fff
-    style Storage fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff
-```
-
----
-
-## 🚀 Quick Start
-
-<details open>
-<summary><b>📦 Installation</b></summary>
-
-### 1️⃣ Clone the Repository
-
-```bash
-git clone https://github.com/dsa-advanced-assignment-hnsw/hnsw-search-engine.git
-cd hnsw-search-engine
-```
-
-### 2️⃣ Setup Backend (Conda Recommended)
-
+**Option 1: Using Conda (Recommended)**
 ```bash
 cd backend
 
-# Create environment
+# Create and activate environment
 conda env create -f environment.yml
-
-# Activate
 conda activate hnsw-backend-venv
 
-# Install additional dependencies (if needed)
+# Install dependencies
 pip install -r requirements-clean.txt
+
+# Run unified backend (supports all search types)
+ENGINE_TYPE=image python app.py  # Port 5000 (default)
+# or
+ENGINE_TYPE=paper python app.py
+# or
+ENGINE_TYPE=medical python app.py
 ```
 
-### 3️⃣ Choose Your Server
-
+**Option 2: Using venv**
 ```bash
-# 🖼️ Image Search v2 (Online Images)
-python server_v2.py  # Port 5000
+cd backend
 
-# 📄 Paper Search (arXiv Papers)
-python server_paper.py  # Port 5001
+# Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# 🏥 Medical Search (Bone Fractures)
-python server_medical.py  # Port 5002
+# Install dependencies
+pip install -r requirements-clean.txt
+
+# Run server
+python app.py
 ```
 
-### 4️⃣ Setup Frontend
+**Legacy Servers (Alternative)**
+```bash
+python server_v2.py      # Image search v2 (online images)
+python server_paper.py   # Paper search
+python server_medical.py # Medical search
+```
+
+### Frontend Setup
 
 ```bash
 cd client
@@ -200,112 +127,79 @@ cd client
 # Install dependencies
 npm install
 
-# Configure API URLs
-echo "NEXT_PUBLIC_API_URL=http://localhost:5000" > .env.local
-echo "NEXT_PUBLIC_PAPER_API_URL=http://localhost:5001" >> .env.local
-echo "NEXT_PUBLIC_MEDICAL_API_URL=http://localhost:5002" >> .env.local
+# Configure API endpoints
+cat > .env.local << EOF
+NEXT_PUBLIC_API_URL=http://localhost:5000
+NEXT_PUBLIC_PAPER_API_URL=http://localhost:5001
+NEXT_PUBLIC_MEDICAL_API_URL=http://localhost:5002
+EOF
 
-# Start dev server
+# Start development server
 npm run dev
 ```
 
-### 5️⃣ Open Browser
+### Access the Application
 
-🎉 Visit **http://localhost:3000** and start searching!
+Open your browser and navigate to **http://localhost:3000**
 
-</details>
+### Quick Start Scripts
 
----
+For convenience, use the provided startup scripts:
 
-## 🛠️ Technology Stack
-
-<div align="center">
-
-### Backend Technologies
-
-<p>
-  <img src="https://img.shields.io/badge/Flask-3.0-000000?style=for-the-badge&logo=flask&logoColor=white" />
-  <img src="https://img.shields.io/badge/PyTorch-2.0+-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white" />
-  <img src="https://img.shields.io/badge/OpenAI-CLIP-412991?style=for-the-badge&logo=openai&logoColor=white" />
-  <img src="https://img.shields.io/badge/BiomedCLIP-Medical_AI-0078D4?style=for-the-badge&logo=microsoft&logoColor=white" />
-  <img src="https://img.shields.io/badge/hnswlib-Vector_Search-FF6B6B?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/HDF5-Data_Storage-013243?style=for-the-badge" />
-</p>
-
-### Frontend Technologies
-
-<p>
-  <img src="https://img.shields.io/badge/Next.js-15-000000?style=for-the-badge&logo=next.js&logoColor=white" />
-  <img src="https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
-  <img src="https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" />
-  <img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black" />
-</p>
-
-### ML Models
-
-<table align="center">
-<tr>
-<td align="center" width="33%">
-  <img src="https://img.icons8.com/color/96/000000/artificial-intelligence.png" width="64" /><br />
-  <b>BiomedCLIP</b><br />
-  <sub>Medical Vision-Language</sub><br />
-  <code>512-dim embeddings</code>
-</td>
-<td align="center" width="33%">
-  <img src="https://img.icons8.com/color/96/000000/machine-learning.png" width="64" /><br />
-  <b>Sentence Transformers</b><br />
-  <sub>all-roberta-large-v1</sub><br />
-  <code>1024-dim embeddings</code>
-</td>
-<td align="center" width="33%">
-  <img src="https://img.icons8.com/color/96/000000/graph.png" width="64" /><br />
-  <b>HNSW Algorithm</b><br />
-  <sub>Vector Similarity Search</sub><br />
-  <code>Sub-second retrieval</code>
-</td>
-</tr>
-</table>
-
-</div>
-
----
-
-## 📊 API Endpoints
-
-<details>
-<summary><b>🏥 Medical Search API (Port 5002)</b></summary>
-
-### Search by Text
 ```bash
-POST /search
-Content-Type: application/json
+# Start backend (from project root)
+./start-backend.sh
 
-{
-  "query": "distal radius fracture",
-  "k": 20
-}
+# Start frontend (in another terminal)
+./start-frontend.sh
 ```
 
-### Search by X-ray Image
+## Technology Stack
+
+### Backend
+- **Framework**: Flask 3.0 with CORS support
+- **ML Libraries**: PyTorch 2.0+, Transformers, Sentence Transformers
+- **Models**: 
+  - CLIP ViT-B/32 (OpenAI) - 512-dim embeddings
+  - BiomedCLIP - 512-dim medical embeddings
+  - all-roberta-large-v1 (Sentence Transformers) - 1024-dim embeddings
+- **Vector Search**: hnswlib for approximate nearest neighbor search
+- **Data Storage**: HDF5 (h5py) for embeddings, NumPy arrays
+- **Image Processing**: Pillow, torchvision
+- **Document Processing**: PyPDF2 for PDF text extraction
+- **HTTP Client**: requests with connection pooling
+- **Production Server**: Gunicorn (optional)
+
+### Frontend
+- **Framework**: Next.js 16 with App Router
+- **Language**: TypeScript 5.0+
+- **UI Library**: React 19
+- **Styling**: Tailwind CSS 4
+- **Components**: Radix UI primitives
+- **Animations**: Framer Motion
+- **Icons**: Lucide React
+- **Theme**: next-themes for dark/light mode
+- **Build Tool**: Turbopack
+
+### HNSW Visualization (Simple-HNSW)
+- **Backend**: FastAPI with Python
+- **Frontend**: React + Vite + Three.js
+- **3D Rendering**: @react-three/fiber, @react-three/drei
+- **Language**: TypeScript
+
+## API Endpoints
+
+### Common Endpoints (All Servers)
+
+**Health Check**
 ```bash
-POST /search/image
-Content-Type: multipart/form-data
-
-FormData:
-  - image: [file]
-  - k: 20
+GET /health
 ```
+Returns server status, model info, and configuration.
 
-### Serve Image
-```bash
-GET /image?path=/absolute/path/to/image.jpg
-```
-</details>
+### Image Search API (Port 5000)
 
-<details>
-<summary><b>🖼️ Image Search API (Port 5000)</b></summary>
-
-### Search by Text
+**Search by Text**
 ```bash
 POST /search
 Content-Type: application/json
@@ -316,7 +210,7 @@ Content-Type: application/json
 }
 ```
 
-### Search by Image
+**Search by Image**
 ```bash
 POST /search/image
 Content-Type: multipart/form-data
@@ -325,12 +219,21 @@ FormData:
   - image: [file]
   - k: 20
 ```
-</details>
 
-<details>
-<summary><b>📄 Paper Search API (Port 5001)</b></summary>
+**Image Proxy (v2 only)**
+```bash
+GET /image-proxy?url=<encoded_url>
+```
 
-### Search by Text
+**Cache Management (v2 only)**
+```bash
+GET /cache/stats    # Get cache statistics
+POST /cache/clear   # Clear cache
+```
+
+### Paper Search API (Port 5001)
+
+**Search by Text**
 ```bash
 POST /search
 Content-Type: application/json
@@ -340,84 +243,240 @@ Content-Type: application/json
   "k": 20
 }
 ```
-</details>
 
----
+**Search by Document**
+```bash
+POST /search/document
+Content-Type: multipart/form-data
 
-## 📁 Project Structure
+FormData:
+  - document: [PDF/TXT/MD file]
+  - k: 20
+```
+
+### Medical Search API (Port 5002)
+
+**Search by Text**
+```bash
+POST /search
+Content-Type: application/json
+
+{
+  "query": "distal radius fracture",
+  "k": 20
+}
+```
+
+**Search by X-ray Image**
+```bash
+POST /search/image
+Content-Type: multipart/form-data
+
+FormData:
+  - image: [file]
+  - k: 20
+```
+
+**Serve Local Image**
+```bash
+GET /image?path=/absolute/path/to/image.jpg
+```
+
+For detailed API documentation, see [backend/README.md](backend/README.md).
+
+## Project Structure
 
 ```
 dsa-advanced-assignment-hnsw/
 │
-├── 🎨 client/                           # Next.js Frontend
-│   ├── src/app/
-│   │   ├── page.tsx                     # Main search interface (All tabs)
-│   │   └── layout.tsx                   # App layout
-│   ├── .env.local                       # API URL Configuration
+├── backend/                             # Flask Backend Services
+│   ├── app.py                          # Unified backend (v3, modular)
+│   ├── server_v2.py                    # Image search v2 (online images)
+│   ├── server_paper.py                 # Paper search
+│   ├── server_medical.py               # Medical search
+│   │
+│   ├── core/                           # Shared core modules
+│   │   ├── base_engine.py             # Base search engine class
+│   │   ├── cache.py                   # LRU image cache
+│   │   ├── config.py                  # Configuration management
+│   │   └── image_fetcher.py           # Image fetching utilities
+│   │
+│   ├── engines/                        # Search engine implementations
+│   │   ├── image_engine.py            # Image search engine
+│   │   ├── paper_engine.py            # Paper search engine
+│   │   └── medical_engine.py          # Medical search engine
+│   │
+│   ├── routes/                         # API route blueprints
+│   │   ├── search.py                  # Search endpoints
+│   │   ├── image_proxy.py             # Image proxy endpoints
+│   │   └── health.py                  # Health check endpoints
+│   │
+│   ├── Data Files (HDF5 + Binary)
+│   │   ├── Images_Embedbed_0-100000.h5       # Image embeddings
+│   │   ├── Papers_Embedbed_0-100000.h5       # Paper embeddings (100K)
+│   │   ├── Medical_Fractures_Embedbed.h5     # Medical embeddings
+│   │   └── *.bin                             # HNSW index files
+│   │
+│   └── Configuration
+│       ├── requirements-clean.txt      # Production dependencies
+│       ├── requirements.txt            # Full dependencies
+│       └── environment.yml             # Conda environment
+│
+├── client/                              # Next.js Frontend
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── page.tsx               # Main search interface
+│   │   │   ├── layout.tsx             # App layout
+│   │   │   └── globals.css            # Global styles
+│   │   ├── components/                # React components
+│   │   ├── hooks/                     # Custom React hooks
+│   │   └── types/                     # TypeScript types
+│   ├── .env.local                     # API configuration (not in repo)
+│   ├── package.json
 │   └── README.md
 │
-├── ⚙️ backend/                          # Flask Backend Services
-│   ├── server.py                        # Image search v1 (local)
-│   ├── server_v2.py                     # Image search v2 (online)
-│   ├── server_paper.py                  # Paper search (Port 5001)
-│   ├── server_medical.py                # Medical search (Port 5002) ⭐
-│   │
-│   ├── 📦 Data Files
-│   │   ├── images_embeds_new.h5         # Image embeddings
-│   │   ├── Papers_Embedbed_*.h5         # Paper embeddings
-│   │   └── Medical_Fractures_Embedbed.h5 # Medical embeddings
-│   │
-│   └── 📄 Configuration
-│       ├── requirements-clean.txt       # Backend dependencies
-│       └── environment.yml              # Conda environment
-│
-├── 🏥 medical_embedder/                 # Medical Embedding Pipeline
-│   ├── generate_embeddings_local.py     # Embedding generator
-│   ├── bone_fractures/                  # Local image dataset
+├── simple_hnsw/                        # HNSW Visualization App
+│   ├── src/
+│   │   └── simple_hnsw/
+│   │       ├── hnsw.py                # Pure Python HNSW implementation
+│   │       └── distance_metrics.py    # Distance functions
+│   ├── web_app/
+│   │   ├── backend/
+│   │   │   └── server.py              # FastAPI server
+│   │   └── frontend/                  # React + Three.js visualization
+│   ├── tests/                         # Unit tests and benchmarks
 │   └── README.md
 │
-├── 🔬 paper_embedder/                   # Paper Embedding Pipeline
-├── 🖼️ image_embedder/                   # Image Embedding Pipeline
+├── embedders/                          # Embedding Generation Pipelines
+│   ├── medical_embedder/
+│   │   ├── generate_embeddings_local.py
+│   │   ├── bone_fractures/            # Local X-ray dataset
+│   │   └── README.md
+│   ├── image_embedder/
+│   └── paper_embedder/
 │
-└── 📚 Documentation
-    ├── README.md                        # This file
-    └── CLAUDE.md                        # Development guide
+├── notebooks/                          # Jupyter notebooks for analysis
+│   ├── 01_data_preparation/
+│   ├── 02_embedding_generation/
+│   ├── 03_index_building/
+│   └── 04_analysis/
+│
+├── latex/                              # Project report (LaTeX)
+│   ├── main.tex
+│   ├── sections/
+│   └── main.pdf
+│
+├── Documentation
+│   ├── README.md                      # This file
+│   ├── CLAUDE.md                      # Development guide
+│   ├── QUICKSTART.md                  # Quick start guide
+│   └── *.md                           # Various documentation files
+│
+└── Scripts
+    ├── start-backend.sh               # Backend startup script
+    ├── start-frontend.sh              # Frontend startup script
+    └── start-medical-backend.sh       # Medical backend startup
 ```
 
----
-
-## 📈 Performance
-
-<div align="center">
+## Performance Metrics
 
 | Metric | Image Search | Paper Search | Medical Search |
 |--------|--------------|--------------|----------------|
-| **Index Size** | 1,000 images | 1M papers | ~3,400 X-rays |
+| **Index Size** | 1,000 images | 100K-1M papers | ~3,400 X-rays |
 | **Query Time** | < 100ms | < 200ms | < 50ms |
-| **Embedding** | 512-dim | 1024-dim | 512-dim |
-| **Storage** | ~5MB | ~4GB | ~19MB |
-| **Accuracy** | High | High | Clinical |
+| **Embedding Dim** | 512 | 1024 | 512 |
+| **Storage (HDF5)** | ~5MB | ~4GB (1M) | ~19MB |
+| **HNSW Index** | ~2MB | ~400MB (1M) | ~15MB |
+| **Model Size** | ~350MB (CLIP) | ~1.3GB (RoBERTa) | ~2GB (BiomedCLIP) |
+| **RAM Usage** | ~2GB | ~4-5GB (1M) | ~3GB |
+| **Accuracy** | High (CLIP) | High (Semantic) | Clinical (Medical) |
 
-</div>
+**HNSW Parameters:**
+- M: 16-200 (connectivity)
+- ef_construction: 200-400 (build quality)
+- ef: 200 (search quality)
+- Space: Cosine similarity
 
----
+## Simple-HNSW Visualization
 
-## 📄 License
+This project includes an interactive 3D visualization tool for understanding the HNSW algorithm:
 
-<div align="center">
+**Location:** `simple_hnsw/` directory
 
-**MIT License**
+**Features:**
+- Pure Python HNSW implementation for educational purposes
+- Interactive 3D graph visualization using React + Three.js
+- Real-time animation of node insertion and search
+- FastAPI backend serving graph state
+- Modern UI with dark/light mode
+
+**Quick Start:**
+```bash
+cd simple_hnsw
+
+# Linux/macOS
+./run_web_app.sh
+
+# Windows
+run_web_app.bat
+```
+
+Visit **http://localhost:5173** to explore the visualization.
+
+For more details, see [simple_hnsw/README.md](simple_hnsw/README.md).
+
+## Documentation
+
+- **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide with automated scripts
+- **[CLAUDE.md](CLAUDE.md)** - Development guide and project context
+- **[backend/README.md](backend/README.md)** - Backend API documentation
+- **[client/README.md](client/README.md)** - Frontend documentation
+- **[simple_hnsw/README.md](simple_hnsw/README.md)** - HNSW visualization guide
+
+## Environment Variables
+
+### Backend (app.py)
+```bash
+ENGINE_TYPE=image|paper|medical  # Select search engine type
+PORT=5000                        # Server port
+FLASK_DEBUG=0                    # Debug mode (0 or 1)
+IMAGE_CACHE_SIZE_MB=100         # Image cache size
+IMAGE_FETCH_TIMEOUT=10          # HTTP timeout for images
+MAX_HNSW_ELEMENTS=2000000       # HNSW index capacity
+```
+
+### Frontend
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:5000           # Image search API
+NEXT_PUBLIC_PAPER_API_URL=http://localhost:5001     # Paper search API
+NEXT_PUBLIC_MEDICAL_API_URL=http://localhost:5002   # Medical search API
+```
+
+## Deployment
+
+### Backend Options
+1. **VPS/Dedicated Server**: Deploy with Gunicorn + Nginx
+2. **Cloud Platforms**: Railway, Render, Google Cloud Run, AWS, Azure
+3. **Local + ngrok**: Expose local server to internet
+
+### Frontend Options
+1. **Vercel**: Recommended for Next.js (automatic deployment)
+2. **Netlify**: Alternative static hosting
+3. **Self-hosted**: Build and deploy to any static host
+
+For detailed deployment instructions, see [QUICKSTART.md](QUICKSTART.md) and [backend/README.md](backend/README.md).
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+MIT License
 
 Copyright (c) 2025 HNSW Search Engine
 
-</div>
+## Built With
 
----
+CLIP • BiomedCLIP • Sentence Transformers • HNSW • Flask • Next.js • React • TypeScript
 
-<div align="center">
-
-### 💖 Built with love using
-
-**CLIP • OpenCLIP • HNSW • Flask • Next.js**
-
-</div>
