@@ -35,6 +35,11 @@ tqdm>=4.65.0
 # Production Server (optional)
 gunicorn>=21.0.0
 
+# Visualization Server (FastAPI)
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+
 # Note: If you're using conda, you may want to install some packages via conda first:
 # conda install -c conda-forge numpy h5py pillow requests tqdm
 # Then install the remaining packages with: pip install -r requirements.txt
