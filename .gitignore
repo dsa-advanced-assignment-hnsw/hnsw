@@ -96,3 +96,5 @@ htmlcov/
 */*/.cache
 .cache
 SQL/train-images-boxable-with-rotation.csv
+
+*/*/OUTPUT
