@@ -74,7 +74,7 @@ export default function LandingPage() {
           </div>
           <div className="flex gap-4">
             <Link
-              href="/visualization"
+              href="https://hnsw-visualization.vercel.app/"
               className="hidden sm:flex px-6 py-2 bg-white text-black font-bold border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all items-center gap-2"
             >
               VISUALIZER <Activity className="w-4 h-4" />
