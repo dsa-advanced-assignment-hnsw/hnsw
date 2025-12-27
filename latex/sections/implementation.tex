@@ -28,7 +28,7 @@ Backend được triển khai bằng Flask (Python) với ba dịch vụ độc 
     \item \textbf{Embedding dimension}: 512
     \item \textbf{Dataset}: Open Images V7, 1.502.477 hình ảnh
     \item \textbf{Storage}: HDF5 file (\texttt{Image\_Embedded.h5})
-    \item \textbf{Features}: Hỗ trợ hình ảnh từ nhiều nguồn (Flickr, Pinterest, Google Images)
+    \item \textbf{Features}: Tìm kiếm hình ảnh bằng từ khóa (string) hay ảnh (.png, .jpg)
 \end{itemize}
 
 \subsubsection{Paper Search Service (\url{https://huynguyen6906-paper-server.hf.space/})}
@@ -36,7 +36,7 @@ Backend được triển khai bằng Flask (Python) với ba dịch vụ độc 
     \item \textbf{Mô hình}: Sentence Transformers (all-roberta-large-v1)
     \item \textbf{Embedding dimension}: 1024
     \item \textbf{Dataset}: arXiv papers, 1.000.000 tài liệu
-    \item \textbf{Storage}: HDF5 file (\texttt{Papers\_Embedbed\_0-100000.h5})
+    \item \textbf{Storage}: HDF5 file (\texttt{Papers\_Embedbed\_0-1000000.h5})
     \item \textbf{Features}: Tìm kiếm bằng văn bản hoặc tải lên file PDF/TXT
 \end{itemize}
 
@@ -52,10 +52,10 @@ Backend được triển khai bằng Flask (Python) với ba dịch vụ độc 
 \section{Mô tả dữ liệu}
 
 \subsection{Dataset hình ảnh}
-Dataset hình ảnh được lấy từ Open Images V7, một tập dữ liệu công khai lớn với hơn 9 triệu hình ảnh. Hệ thống sử dụng 100,000 hình ảnh được chọn ngẫu nhiên từ tập dữ liệu này. Mỗi hình ảnh được mã hóa thành vector 512 chiều sử dụng mô hình CLIP (ViT-B/32), được chuẩn hóa L2 để tối ưu cho cosine similarity.
+Dataset hình ảnh được lấy từ Open Images V7, một tập dữ liệu công khai lớn với hơn 9 triệu hình ảnh. Hệ thống sử dụng 1,5M+ hình ảnh được lấy từ nguồn dữ liệu này. Mỗi hình ảnh được mã hóa thành vector 512 chiều sử dụng mô hình CLIP (ViT-B/32), được chuẩn hóa L2 để tối ưu cho cosine similarity.
 
 \subsection{Dataset tài liệu}
-Dataset tài liệu bao gồm 100,000 bài báo khoa học từ arXiv, một kho lưu trữ công khai các bài báo khoa học. Mỗi bài báo được biểu diễn bằng abstract (tóm tắt) của nó, được mã hóa thành vector 1024 chiều sử dụng mô hình Sentence Transformers (RoBERTa-large). Các vector được chuẩn hóa L2 và lưu trữ cùng với URL PDF của bài báo.
+Dataset tài liệu bao gồm 1.000.000 bài báo khoa học từ arXiv, một kho lưu trữ công khai các bài báo khoa học. Mỗi bài báo được biểu diễn bằng abstract (tóm tắt) của nó, được mã hóa thành vector 1024 chiều sử dụng mô hình Sentence Transformers (RoBERTa-large). Các vector được chuẩn hóa L2 và lưu trữ cùng với URL PDF của bài báo.
 
 \subsection{Dataset hình ảnh y tế}
 Dataset hình ảnh y tế bao gồm 3,400 hình ảnh X-quang gãy xương từ FracAtlas dataset. Mỗi hình ảnh được mã hóa thành vector 512 chiều sử dụng mô hình BiomedCLIP, được huấn luyện trên 15 triệu cặp hình ảnh-văn bản y sinh từ PubMed. Mô hình này được tối ưu hóa đặc biệt cho các hình ảnh y tế và hiểu được các thuật ngữ y tế phức tạp.
@@ -78,13 +78,7 @@ Các vector embedding được lưu trữ trong định dạng HDF5 với cấu 
 \begin{verbatim}
 {
     'embeddings': (N, d) float32,  # N vectors, d dimensions
-    'urls' hoặc 'image_path': (N,) string,  # URLs hoặc đường dẫn
-    'attrs': {
-        'model': 'model_name',
-        'embedding_dim': d,
-        'total_items': N,
-        'created_date': 'timestamp'
-    }
+    'urls' hoặc 'image_path': (N,) string  # URLs hoặc đường dẫn
 }
 \end{verbatim}
 
@@ -122,9 +116,6 @@ Mỗi backend service cung cấp các endpoint REST API:
     \item \texttt{GET /health}: Kiểm tra trạng thái service
 \end{itemize}
 
-\subsection{Triển khai Brute-force Baseline}
-Để so sánh hiệu suất, hệ thống cũng triển khai phương pháp brute-force như baseline. Brute-force thực hiện tính toán khoảng cách cosine giữa vector truy vấn và tất cả các vector trong dataset, sau đó sắp xếp và chọn $k$ vector gần nhất. Độ phức tạp thời gian là $O(N \times d)$ với $N$ là số lượng vector và $d$ là số chiều.
-
 \section{Quy trình xử lý}
 
 \subsection{Quy trình tìm kiếm}
@@ -144,5 +135,4 @@ Mỗi backend service cung cấp các endpoint REST API:
     \item \textbf{Xây dựng HNSW}: Sử dụng hnswlib để xây dựng đồ thị HNSW từ các vector
     \item \textbf{Lưu chỉ mục}: Lưu đồ thị HNSW vào file .bin để tải nhanh khi khởi động
 \end{enumerate}
-
 

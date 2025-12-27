@@ -30,7 +30,7 @@ Mặc dù có nhiều ưu điểm, HNSW vẫn có một số hạn chế:
 \subsection{Hạn chế về bộ nhớ}
 \begin{itemize}
     \item \textbf{Overhead bộ nhớ}: Mỗi nút cần lưu trữ M kết nối, dẫn đến overhead $O(N \times M)$
-    \item \textbf{Với M=200}: Cần ~3-4GB RAM cho 100K vector, ~30-40GB cho 1M vector
+    \item \textbf{Với M=200}: Cần khoảng 285--490 MB RAM cho 100K vector, và khoảng 2.8--4.9 GB cho 1M vector
     \item \textbf{Giải pháp}: Có thể giảm M để tiết kiệm bộ nhớ, nhưng sẽ giảm độ chính xác
 \end{itemize}
 
@@ -104,5 +104,4 @@ Nghiên cứu này đã thành công trong việc triển khai và đánh giá h
 Hệ thống đã được triển khai thành công với ba dịch vụ backend độc lập và một frontend thống nhất, chứng minh tính khả thi cho ứng dụng production. Với các cải tiến được đề xuất, hệ thống có thể được mở rộng để xử lý hàng triệu vector và phục vụ nhiều người dùng đồng thời.
 
 Nghiên cứu này cung cấp nền tảng vững chắc cho việc phát triển các ứng dụng tìm kiếm vector trong tương lai, và mở ra nhiều hướng nghiên cứu thú vị về tối ưu hóa hiệu suất, mở rộng quy mô và cải thiện độ chính xác.
-
 
