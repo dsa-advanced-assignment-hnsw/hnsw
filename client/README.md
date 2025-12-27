@@ -1,15 +1,18 @@
 # HNSW Semantic Search - Frontend
 
-Modern Next.js frontend for the HNSW Semantic Search Engine supporting both image and paper search.
+Modern Next.js frontend for the HNSW Semantic Search Engine supporting image, paper, and medical search.
 
 ## Features
 
-- 🎨 Beautiful, responsive UI built with Next.js 15 and Tailwind CSS
-- 🔍 Real-time image search with loading states
-- 📊 Visual similarity scores with progress bars
-- 🌓 Dark mode support
-- ⚡ Optimized image loading with lazy loading
-- 🎯 TypeScript for type safety
+- Beautiful, responsive UI built with Next.js 16 and Tailwind CSS 4
+- Real-time search with loading states and error handling
+- Visual similarity scores with progress indicators
+- Dark mode support with theme persistence
+- Optimized image loading with lazy loading and caching
+- TypeScript for type safety
+- Three-tab interface: Image Search, Paper Search, Medical Search
+- Drag-and-drop file upload support
+- Mobile-responsive design
 
 ## Prerequisites
 
@@ -31,9 +34,11 @@ Create a `.env.local` file in the `client` folder:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:5000
+NEXT_PUBLIC_PAPER_API_URL=http://localhost:5001
+NEXT_PUBLIC_MEDICAL_API_URL=http://localhost:5002
 ```
 
-For production, update this to your deployed backend URL.
+For production, update these to your deployed backend URLs.
 
 ## Running Locally
 
@@ -123,26 +128,43 @@ The frontend communicates with the backend through these endpoints:
 - `GET /cache/stats` - Cache statistics (v2)
 - `GET /health` - Health check
 
-**Paper Search API (server_paper.py):**
+**Paper Search API (server_paper.py - Port 5001):**
 - `POST /search` - Search for papers by text
-- `POST /search/document` - Search for papers by document upload
+- `POST /search/document` - Search for papers by document upload (PDF/TXT/MD)
 - `GET /health` - Health check
 
-**Note:** Configure `NEXT_PUBLIC_API_URL` to point to the appropriate backend server.
+**Medical Search API (server_medical.py - Port 5002):**
+- `POST /search` - Search for X-rays by medical terms
+- `POST /search/image` - Search for similar X-rays by image upload
+- `GET /image?path=...` - Serve local X-ray images
+- `GET /health` - Health check
+
+**Note:** Configure the appropriate `NEXT_PUBLIC_*_API_URL` environment variables for each backend service.
 
 ## Project Structure
 
 ```
 client/
 ├── src/
-│   └── app/
-│       ├── page.tsx         # Main search page
-│       ├── layout.tsx        # Root layout
-│       └── globals.css       # Global styles
-├── public/                   # Static assets
-├── package.json              # Dependencies
-├── vercel.json              # Vercel config
-└── tsconfig.json            # TypeScript config
+│   ├── app/
+│   │   ├── page.tsx              # Main search interface (3 tabs)
+│   │   ├── layout.tsx            # Root layout
+│   │   ├── globals.css           # Global styles
+│   │   └── fonts/                # Font configuration
+│   ├── components/               # React components
+│   │   ├── SearchForm.tsx        # Search input components
+│   │   ├── SearchResults.tsx     # Results display
+│   │   ├── ImageModal.tsx        # Image detail modal
+│   │   └── ui/                   # Radix UI components
+│   ├── hooks/                    # Custom React hooks
+│   │   ├── useImageSearch.ts
+│   │   ├── useImageUpload.ts
+│   │   └── useImageData.ts
+│   └── types/                    # TypeScript type definitions
+├── public/                       # Static assets
+├── package.json                  # Dependencies
+├── vercel.json                   # Vercel config
+└── tsconfig.json                 # TypeScript config
 ```
 
 ## Customization

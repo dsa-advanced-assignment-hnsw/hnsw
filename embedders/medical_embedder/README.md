@@ -112,7 +112,7 @@ Execute all cells in order:
 7. Save to HDF5
 8. Verify output
 
-**Time estimate**: 1-2 hours for full pipeline (4,083 images)
+Time estimate: 1-2 hours for full pipeline (4,083 images)
 
 ### Step 6: Copy HDF5 to Backend
 
@@ -160,7 +160,7 @@ Uploads all images to Cloudinary CDN:
 - Time: ~60 minutes for 4,083 images
 - Result: Permanent public URLs
 
-**Example URL**:
+Example URL:
 ```
 https://res.cloudinary.com/dxxxxxxxx/image/upload/v1234567890/medical/fractures/femur_001.jpg
 ```
@@ -293,9 +293,9 @@ Medical terminology queries that work well:
 
 ### Issue: Cloudinary Upload Fails
 
-**Symptoms**: Upload errors, timeout, or rate limit exceeded
+Symptoms: Upload errors, timeout, or rate limit exceeded
 
-**Solutions**:
+Solutions:
 1. Check Cloudinary credentials
 2. Verify internet connection
 3. Reduce upload rate (increase `time.sleep()` in Cell 4)
@@ -303,9 +303,9 @@ Medical terminology queries that work well:
 
 ### Issue: BiomedCLIP Model Download Fails
 
-**Symptoms**: Timeout or connection error when loading model
+Symptoms: Timeout or connection error when loading model
 
-**Solutions**:
+Solutions:
 1. Check internet connection
 2. Retry - Hugging Face servers may be busy
 3. Download manually:
@@ -315,9 +315,9 @@ Medical terminology queries that work well:
 
 ### Issue: Out of Memory
 
-**Symptoms**: CUDA out of memory or system RAM exhausted
+Symptoms: CUDA out of memory or system RAM exhausted
 
-**Solutions**:
+Solutions:
 1. Close other applications
 2. Use CPU instead of GPU (slower but uses less memory)
 3. Process in smaller batches
@@ -325,9 +325,9 @@ Medical terminology queries that work well:
 
 ### Issue: HDF5 File Not Found in Backend
 
-**Symptoms**: server_medical.py can't find HDF5 file
+Symptoms: server_medical.py can't find HDF5 file
 
-**Solutions**:
+Solutions:
 ```bash
 # Copy file to backend directory
 cp Medical_Fractures_Embedbed.h5 ../backend/
@@ -339,9 +339,9 @@ python server_medical.py
 
 ### Issue: Images Not Loading in Search Results
 
-**Symptoms**: Search works but images don't display
+Symptoms: Search works but images don't display
 
-**Solutions**:
+Solutions:
 1. Check Cloudinary URLs are public
 2. Verify image-proxy endpoint works:
    ```bash
@@ -434,27 +434,25 @@ with h5py.File('merged.h5', 'w') as f:
 
 After generating embeddings:
 
-1. ✅ Copy HDF5 file to `backend/` directory
-2. ✅ Start `server_medical.py` on port 5002
-3. ✅ Test with example queries
-4. ✅ Integrate with frontend (optional)
-5. ✅ Deploy to production
+1. Copy HDF5 file to `backend/` directory
+2. Start `server_medical.py` on port 5002
+3. Test with example queries
+4. Integrate with frontend (optional)
+5. Deploy to production
 
 ## Support
 
-- **Cloudinary Issues**: See `CLOUDINARY_SETUP.md`
-- **Dataset Issues**: See `DATASET.md`
-- **Backend Issues**: See `../backend/README.md`
-- **Model Issues**: https://huggingface.co/microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224
+- Cloudinary Issues: See `CLOUDINARY_SETUP.md`
+- Dataset Issues: See `DATASET.md`
+- Backend Issues: See `../backend/README.md`
+- Model Issues: https://huggingface.co/microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224
 
 ## License
 
-- **Code**: MIT License (this project)
-- **FracAtlas Dataset**: Check repository license
-- **BiomedCLIP Model**: Apache 2.0 License
-- **Cloudinary**: Free tier terms of service
+- Code: MIT License (this project)
+- FracAtlas Dataset: Check repository license
+- BiomedCLIP Model: Apache 2.0 License
+- Cloudinary: Free tier terms of service
 
----
-
-**Ready to generate embeddings?** Follow the Quick Start guide above!
+Ready to generate embeddings? Follow the Quick Start guide above.
 

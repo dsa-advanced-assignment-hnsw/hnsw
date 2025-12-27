@@ -30,9 +30,9 @@ Headings have additional styling:
 
 ## No Local Files Needed
 
-✅ This font is loaded from a CDN, so no local font files are required in this directory.
+This font is loaded from a CDN, so no local font files are required in this directory.
 
-✅ The font will load automatically when the application starts.
+The font will load automatically when the application starts.
 
 ## Fallback Fonts
 

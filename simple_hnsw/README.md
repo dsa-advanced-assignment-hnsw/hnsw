@@ -1,31 +1,29 @@
 # Simple-HNSW
 
-[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+**Python 3.8+ | License: MIT | Code Style: Black**
 
-A pure Python implementation of the **Hierarchical Navigable Small World (HNSW)** algorithm for approximate nearest neighbor search. This project is designed primarily for **educational purposes**, offering a clean, readable codebase to understand the inner workings of HNSW.
+A pure Python implementation of the Hierarchical Navigable Small World (HNSW) algorithm for approximate nearest neighbor search. This project is designed primarily for educational purposes, offering a clean, readable codebase to understand the inner workings of HNSW.
 
-It now features a powerful **Modern Web Application** for interactive 3D visualization of the graph construction and search process.
+It now features a powerful Modern Web Application for interactive 3D visualization of the graph construction and search process.
 
-## ✨ Features
+## Features
 
 - **Pure Python Implementation**: Easy to read, debug, and modify. Ideal for learning the HNSW algorithm.
-- **Distance Metrics**: Supports **L2 (Euclidean)** and **Cosine** distance metrics.
-- **Interactive 3D Web Visualization** (New!):
-    - **React + Three.js**: High-performance 3D rendering of the HNSW graph.
-    - **Real-time Animation**: Watch node insertion, layer transitions, and nearest neighbor search step-by-step.
-    - **Modern UI**: Dark/Light mode, glassmorphism design, and intuitive controls.
-    - **FastAPI Backend**: Robust API to serve graph state and simulation logs.
+- **Distance Metrics**: Supports L2 (Euclidean) and Cosine distance metrics.
+- **Interactive 3D Web Visualization**:
+    - React + Three.js: High-performance 3D rendering of the HNSW graph
+    - Real-time Animation: Watch node insertion, layer transitions, and nearest neighbor search step-by-step
+    - Modern UI: Dark/Light mode, glassmorphism design, and intuitive controls
+    - FastAPI Backend: Robust API to serve graph state and simulation logs
 - **Benchmarking Suite**: Comprehensive tools to compare performance against `hnswlib`.
 
-## 🚀 Quick Start
+## Quick Start
 
 The easiest way to run the visualization is using the provided helper scripts.
 
 ### Prerequisites
-- **Python 3.8+**
-- **Node.js 16+** & **npm**
+- Python 3.8+
+- Node.js 16+ and npm
 
 ### Step 1: Clone the repository
 ```bash
@@ -35,23 +33,27 @@ cd Simple-HNSW
 
 ### Step 2: Run the Application
 
-#### 🐧 Linux / macOS
+**Linux / macOS**
+
 Run the shell script:
 ```bash
 ./run_web_app.sh
 ```
-*Note: This script will automatically create the virtual environment, install dependencies, and start both the backend and frontend.*
 
-#### 🪟 Windows
+Note: This script will automatically create the virtual environment, install dependencies, and start both the backend and frontend.
+
+**Windows**
+
 Run the batch file (double-click or run in CMD):
 ```cmd
 run_web_app.bat
 ```
-*Note: This script will automatically create the virtual environment, install dependencies, and launch two command windows (one for Backend, one for Frontend).*
 
-Open **http://localhost:5173** in your browser to start exploring!
+Note: This script will automatically create the virtual environment, install dependencies, and launch two command windows (one for Backend, one for Frontend).
 
-## 🛠️ Manual Installation & Running
+Open http://localhost:5173 in your browser to start exploring!
+
+## Manual Installation & Running
 
 If you prefer to run services manually or debug specific parts:
 
@@ -94,7 +96,7 @@ npm run dev  # Start dev server
 ```
 App runs on `http://localhost:5173`.
 
-## 📖 Python Library Usage
+## Python Library Usage
 
 You can still use the core HNSW library directly in Python scripts.
 
@@ -121,7 +123,7 @@ neighbors = index.knn_search(query, k=10)
 print("Nearest Neighbors Indices:", neighbors)
 ```
 
-## ⚡ Benchmarking
+## Benchmarking
 
 Compare performance against `hnswlib` (requires `hnswlib` installed):
 
@@ -129,7 +131,7 @@ Compare performance against `hnswlib` (requires `hnswlib` installed):
 python tests/benchmark_hnsw.py
 ```
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 Simple-HNSW/
@@ -144,10 +146,10 @@ Simple-HNSW/
 └── requirements.txt         # Core dependencies
 ```
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 📄 License
+## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
